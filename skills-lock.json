@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "skills": {
+    "backtest": {
+      "source": "marketcalls/vectorbt-backtesting-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/backtest/SKILL.md",
+      "computedHash": "a70e0774966c8908dfb9f2db1f7d5d241ee2baedf02f94dd16fe1420ca8eb7c9",
+      "installMode": "copy"
+    },
+    "backtest-expert": {
+      "source": "tradermonty/claude-trading-skills",
+      "sourceType": "github",
+      "skillPath": "skills/backtest-expert/SKILL.md",
+      "computedHash": "5f42bce729acb76974e5b2be3000c6a2906f9aac03aad40c9f6aec189006a786",
+      "installMode": "copy"
+    },
+    "backtesting-frameworks": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/quantitative-trading/skills/backtesting-frameworks/SKILL.md",
+      "computedHash": "792069fc176d944805f2136a8f98aa7c77ef138c25678baa03d282c5fe18159a",
+      "installMode": "copy"
+    },
+    "llm-trading-agent-security": {
+      "source": "affaan-m/ecc",
+      "sourceType": "github",
+      "skillPath": "skills/llm-trading-agent-security/SKILL.md",
+      "computedHash": "f4c8d1b53d352a466b9d3116a4b49d81ec496c880bcd1a19ab37888bd12a7a99",
+      "installMode": "copy"
+    },
+    "optimize": {
+      "source": "marketcalls/vectorbt-backtesting-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/optimize/SKILL.md",
+      "computedHash": "bd99760482ef212293983912ab4a1a7542fad09b92269e611d2b296312dc9838",
+      "installMode": "copy"
+    },
+    "position-sizer": {
+      "source": "tradermonty/claude-trading-skills",
+      "sourceType": "github",
+      "skillPath": "skills/position-sizer/SKILL.md",
+      "computedHash": "b6e6445b002828c95b4ca420ef91bcf4efd6e4ed3e28687178e54fcbf1d5cd81",
+      "installMode": "copy"
+    },
+    "quick-stats": {
+      "source": "marketcalls/vectorbt-backtesting-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/quick-stats/SKILL.md",
+      "computedHash": "96a47db6da069161cd6aae6ca97c5d02130ca86f464c864af15614bb4bc0950f",
+      "installMode": "copy"
+    },
+    "setup": {
+      "source": "marketcalls/vectorbt-backtesting-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/setup/SKILL.md",
+      "computedHash": "b75f56ea2f8c0adc7f1d9e13f373792bbe6cea5a6849526e92d12415e0a31c41",
+      "installMode": "copy"
+    },
+    "signal-postmortem": {
+      "source": "tradermonty/claude-trading-skills",
+      "sourceType": "github",
+      "skillPath": "skills/signal-postmortem/SKILL.md",
+      "computedHash": "b74424cd4cb8fc78dac73f602cbe972eaf3b41efef9623918afe21029261909c",
+      "installMode": "copy"
+    },
+    "strategy-compare": {
+      "source": "marketcalls/vectorbt-backtesting-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/strategy-compare/SKILL.md",
+      "computedHash": "37719975e8ab7c0e7548b5213fd3101ed312bfae8f25fffd354dd9829a8cfe31",
+      "installMode": "copy"
+    },
+    "technical-analyst": {
+      "source": "tradermonty/claude-trading-skills",
+      "sourceType": "github",
+      "skillPath": "skills/technical-analyst/SKILL.md",
+      "computedHash": "803ecf773a099abf51afe2107d12642de7f96fc4be0aecb3cf77d1cb98fdf367",
+      "installMode": "copy"
+    },
+    "trader-memory-core": {
+      "source": "tradermonty/claude-trading-skills",
+      "sourceType": "github",
+      "skillPath": "skills/trader-memory-core/SKILL.md",
+      "computedHash": "c261242b5d6cac265c453ced70985b8a8f6bd7fb4901b21658a9d712918bff10",
+      "installMode": "copy"
+    },
+    "vectorbt-expert": {
+      "source": "marketcalls/vectorbt-backtesting-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/vectorbt-expert/SKILL.md",
+      "computedHash": "420b1f7e7451bf991e7d87b5ffaef3ffb34e9ea81b63246f90f3808e48b3f7ac",
+      "installMode": "copy"
+    }
+  }
+}

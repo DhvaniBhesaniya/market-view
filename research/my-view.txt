@@ -1,0 +1,13 @@
+i ahve an  broker account  in the groww application
+ i want  an software where i can trade using startegies , with all the things to keep in mind , with prper data ,paper trading for trsting and  exploring statragies on data , 
+ create stratagies and test and  learn from them ,  upgrade stratagies for avdance  it  evolving it to make its efficiency more accurate with the market data  
+ risk managment proper ,  not to be greedy , proepr stop loss and ptrofit booking .
+ then after all collecting data and all we will do live trading using ai  to do our trade and learn, 
+ which ai is good ? claude ,  deepseeak , grok ? what skills to use ,  
+
+ maerket analisys , news ,  global   balance affect market analysis every point of aspect which affects  the market we nned it 
+
+ i want to build an  ai software  which do trades fro me and do profit booking  with proepr risk management 
+ i am new to this and i want to learn and grow using  currwnt market and things .
+i dont  know what is good or what is bad i want to learn,  make the ai learn , from its mistakes and experience. so we can grow and learn and  create an perfect application for trading.
+
