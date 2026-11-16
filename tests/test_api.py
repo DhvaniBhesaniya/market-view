@@ -55,7 +55,7 @@ def test_no_order_endpoints_exist(client):
     assert not [p for p in paths if "order" in p.lower() or "place" in p.lower() or "broker" in p.lower()]
     writes = sorted(p for p, ops in paths.items() if set(ops) & {"post", "put", "patch", "delete"})
     # the complete list of state-changing endpoints; adding one must be a conscious decision
-    assert writes == ["/api/backtests", "/api/indicators/compute", "/api/killswitch", "/api/strategies",
+    assert writes == ["/api/backtests", "/api/chart/download", "/api/indicators/compute", "/api/killswitch", "/api/strategies",
                       "/api/strategies/preview", "/api/strategies/validate", "/api/validations/{kind}"]
 
 

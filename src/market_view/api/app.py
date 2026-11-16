@@ -164,9 +164,52 @@ def _window(df: pd.DataFrame, start: date | None, end: date | None) -> pd.DataFr
 
 
 @api.get("/candles/{symbol}")
-def get_candles(symbol: str, start: str | None = None, end: str | None = None, source: str | None = None) -> dict:
-    df = _window(_load(symbol, source), _parse_day(start), _parse_day(end))
-    return {"symbol": symbol, "source": source or _source(), "bars": ser.candles(df)}
+def get_candles(symbol: str, start: str | None = None, end: str | None = None,
+                source: str | None = None, interval: str = "1d") -> dict:
+    from market_view.api import chart_data
+
+    try:
+        timeframe = chart_data.Interval.parse(interval)
+        src = chart_data.validate_source(source)
+        chart_data.validate_symbol(symbol)
+    except ValueError as e:
+        raise _bad(str(e), 404 if "Unknown symbol" in str(e) else 422) from None
+    first, last = _parse_day(start), _parse_day(end)
+    if first and last and first > last:
+        raise _bad("Start must not be later than end.")
+    full, native, path = chart_data.load(symbol, timeframe, src)
+    meta = chart_data.describe(full, timeframe, src, native, path)
+    df = _window(full, first, last)
+    truncated = len(df) > chart_data.MAX_BARS
+    return {"symbol": symbol, **meta, "truncated": truncated,
+            "bars": ser.candles(df.tail(chart_data.MAX_BARS), intraday=timeframe.intraday)}
+
+
+class ChartDownloadRequest(BaseModel):
+    symbol: str
+    interval: str = "1d"
+    source: Literal["yfinance", "upstox"] | None = None
+    start: str | None = None
+    end: str | None = None
+
+
+@api.post("/chart/download", status_code=status.HTTP_202_ACCEPTED)
+def download_chart(req: ChartDownloadRequest) -> dict:
+    from market_view.api import chart_data
+
+    try:
+        chart_data.validate_symbol(req.symbol)
+        timeframe = chart_data.Interval.parse(req.interval)
+        src = chart_data.validate_source(req.source)
+        if src == "upstox" and not env("UPSTOX_ACCESS_TOKEN"):
+            raise ValueError("Configure UPSTOX_ACCESS_TOKEN before downloading Upstox candles.")
+    except ValueError as e:
+        raise _bad(str(e)) from None
+    start, end = _parse_day(req.start), _parse_day(req.end)
+    if start and end and start > end:
+        raise _bad("Start must not be later than end.")
+    return jobs.submit("chart-download", req.model_dump(),
+                       lambda: chart_data.download(req.symbol, timeframe, src, start, end))
 
 
 @api.get("/indicators")
@@ -190,15 +233,24 @@ class IndicatorRequest(BaseModel):
     start: str | None = None
     end: str | None = None
     items: list[IndicatorItem] = Field(max_length=20)
+    interval: str = "1d"
+    source: Literal["yfinance", "upstox"] | None = None
 
 
 @api.post("/indicators/compute")
 def compute_indicators(req: IndicatorRequest) -> dict[str, Any]:
     """Indicators are computed in PYTHON on the full history (so they are warmed up), with the same code the
     strategies use, then cut to the requested window. The chart never re-implements an indicator."""
+    from market_view.api import chart_data
     from market_view.strategies.rules import INDICATORS, compute_indicator
 
-    df = _load(req.symbol)
+    try:
+        timeframe = chart_data.Interval.parse(req.interval)
+        chart_data.validate_symbol(req.symbol)
+        src = chart_data.validate_source(req.source)
+    except ValueError as e:
+        raise _bad(str(e)) from None
+    df, _, _ = chart_data.load(req.symbol, timeframe, src)
     start, end = _parse_day(req.start), _parse_day(req.end)
     out: dict[str, Any] = {}
     for it in req.items:
@@ -208,7 +260,8 @@ def compute_indicators(req: IndicatorRequest) -> dict[str, Any]:
             series = compute_indicator(df, it.ind, it.params)
         except ValueError as e:
             raise _bad(str(e)) from None
-        out[it.key] = {name: ser.line(_window(s.to_frame("v"), start, end)["v"]) for name, s in series.items()}
+        out[it.key] = {name: ser.line(_window(s.to_frame("v"), start, end)["v"].tail(chart_data.MAX_BARS),
+                                    intraday=timeframe.intraday) for name, s in series.items()}
     return out
 
 
@@ -320,15 +373,16 @@ class PreviewRequest(BaseModel):
     symbol: str
     start: str | None = None
     end: str | None = None
+    source: Literal["yfinance", "upstox"] | None = None
 
 
-def _market() -> pd.DataFrame | None:
+def _market(source: str | None = None) -> pd.DataFrame | None:
     from market_view.data import store
     from market_view.market_context.regime import prepare_market
 
     s = get_settings()
-    nifty = store.load(s.backtest.benchmark, "1d", _source())
-    vix = store.load(s.backtest.volatility_index, "1d", _source())
+    nifty = store.load(s.backtest.benchmark, "1d", source or _source())
+    vix = store.load(s.backtest.volatility_index, "1d", source or _source())
     return prepare_market(nifty, vix) if not nifty.empty else None
 
 
@@ -350,8 +404,8 @@ def preview_strategy(req: PreviewRequest) -> dict[str, Any]:
             raise _bad(str(e), 404) from None
     else:
         raise _bad("give strategy_id or spec")
-    df = _load(req.symbol)
-    prepared = _window(strat.prepare(df, _market()), _parse_day(req.start), _parse_day(req.end))
+    df = _load(req.symbol, req.source)
+    prepared = _window(strat.prepare(df, _market(req.source)), _parse_day(req.start), _parse_day(req.end))
     signals = []
     for ts, row in prepared[prepared["entry"].astype(bool)].iterrows():
         if not strat.regime_ok(row) or not (pd.notna(row["stop"]) and row["stop"] < row["close"]):

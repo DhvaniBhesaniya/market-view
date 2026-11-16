@@ -29,6 +29,7 @@ Section 01 compares the three and adds what they missed or got wrong.
 | 13 | [Codex Skills](13-codex-skills.md) | Installed project skills, existing reference library, adaptations, and provenance |
 | 14 | [Strategy Research](14-strategy-research.md) | Cash vs F&O, swing vs intraday, pre-open selection, candidate rules, data needs, costs, and validation |
 | 15 | [Web UI](15-web-ui.md) | **The app:** how to run `mv ui`, what each page does, the no-code strategy builder, how to check everything |
+| 16 | [Chart Review & Next Work](16-chart-review-and-next-work.md) | Chart sources, accuracy limitations, interval/time changes, and remaining priorities |
 | — | [Strategy cards](strategies/) | Rules, thesis and results history for each strategy version |
 
 ## One-paragraph summary

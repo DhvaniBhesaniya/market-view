@@ -42,20 +42,25 @@ def deep_clean(obj: Any) -> Any:
     return clean(obj)
 
 
-def line(s: pd.Series, digits: int = 4) -> list[dict[str, Any]]:
+def bar_time(ts: Any, intraday: bool = False) -> str:
+    return pd.Timestamp(ts).isoformat() if intraday else day(ts)
+
+
+def line(s: pd.Series, digits: int = 4, intraday: bool = False) -> list[dict[str, Any]]:
     s = s.replace([np.inf, -np.inf], np.nan).dropna()
     out: dict[str, float] = {}
     for ts, v in s.items():
-        out[day(ts)] = round(float(v), digits)  # duplicate days: last one wins (keeps times unique)
+        out[bar_time(ts, intraday)] = round(float(v), digits)
     return [{"time": t, "value": v} for t, v in out.items()]
 
 
-def candles(df: pd.DataFrame) -> list[dict[str, Any]]:
+def candles(df: pd.DataFrame, intraday: bool = False) -> list[dict[str, Any]]:
     rows: dict[str, dict[str, Any]] = {}
     for ts, r in df[["open", "high", "low", "close", "volume"]].iterrows():
         if any(pd.isna(r[c]) for c in ("open", "high", "low", "close")):
             continue
-        rows[day(ts)] = {"time": day(ts), "open": round(float(r["open"]), 4), "high": round(float(r["high"]), 4),
+        key = bar_time(ts, intraday)
+        rows[key] = {"time": key, "timestamp": pd.Timestamp(ts).isoformat(), "open": round(float(r["open"]), 4), "high": round(float(r["high"]), 4),
                          "low": round(float(r["low"]), 4), "close": round(float(r["close"]), 4),
                          "volume": float(r["volume"]) if pd.notna(r["volume"]) else 0.0}
     return list(rows.values())

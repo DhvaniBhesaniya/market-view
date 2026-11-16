@@ -34,6 +34,18 @@ BASE = f"http://127.0.0.1:{PORT}"
 def make_env(tmp: Path) -> dict[str, str]:
     (tmp / "data").mkdir()
     shutil.copytree(ROOT / "data" / "clean", tmp / "data" / "clean")
+    # Synthetic intraday observations exist ONLY in this isolated browser-test workspace.
+    # They test timestamps/aggregation without requesting external data or touching real prices.
+    import pandas as pd
+
+    today = pd.Timestamp.now(tz="Asia/Kolkata").normalize()
+    times = pd.date_range(today + pd.Timedelta(hours=9, minutes=15), periods=75, freq="min")
+    prices = pd.Series([1400 + i * 0.5 for i in range(len(times))], index=times)
+    intraday = pd.DataFrame({"open": prices, "high": prices + 1, "low": prices - 1,
+                             "close": prices + 0.2, "volume": 1000}, index=times)
+    minute_dir = tmp / "data" / "clean" / "yfinance" / "1m"
+    minute_dir.mkdir(parents=True, exist_ok=True)
+    intraday.to_parquet(minute_dir / "RELIANCE.parquet")
     if (ROOT / "data" / "experiments.jsonl").exists():
         shutil.copy(ROOT / "data" / "experiments.jsonl", tmp / "data" / "experiments.jsonl")
     if (ROOT / "reports" / "backtests").exists():
@@ -56,7 +68,7 @@ def wait_server(proc: subprocess.Popen) -> None:
     sys.exit("server did not start")
 
 
-def run(headed: bool, custom_dir: Path, shots: Path) -> tuple[list[str], list[str], list[str]]:
+def run(headed: bool, custom_dir: Path, shots: Path, chart_only: bool = False) -> tuple[list[str], list[str], list[str]]:
     problems: list[str] = []
     passed: list[str] = []
     errors: list[str] = []
@@ -85,6 +97,8 @@ def run(headed: bool, custom_dir: Path, shots: Path) -> tuple[list[str], list[st
                   "/validation?strategy=trend_v1", "/paper", "/data", "/nope"]
         if first_run:
             routes.append(f"/backtests/{first_run}")
+        if chart_only:
+            routes = ["/chart"]
 
         for route in routes:
             def visit(route=route):
@@ -104,7 +118,8 @@ def run(headed: bool, custom_dir: Path, shots: Path) -> tuple[list[str], list[st
             expect(page.get_by_text("you are here").first).to_be_visible()
             page.locator(".term", has_text="PF").first.hover()
             expect(page.get_by_text("Total money won on winning trades")).to_be_visible(timeout=3000)
-        check("safety badges, gate track, explain layer", safety)
+        if not chart_only:
+            check("safety badges, gate track, explain layer", safety)
 
         def chart():
             page.goto(BASE + "/chart?symbol=RELIANCE")
@@ -124,7 +139,59 @@ def run(headed: bool, custom_dir: Path, shots: Path) -> tuple[list[str], list[st
             page.get_by_role("combobox", name="Strategy").click()
             page.get_by_role("option", name="trend_v1").click()
             expect(page.get_by_text(" signals").first).to_be_visible(timeout=20000)
-        check("chart: symbol, add/remove indicator, strategy signals", chart)
+        if not chart_only:
+            check("chart: symbol, add/remove indicator, strategy signals", chart)
+
+        def chart_intervals():
+            page.goto(BASE + "/chart?symbol=RELIANCE&interval=5m")
+            page.wait_for_load_state("networkidle")
+            chart_box = page.get_by_test_id("price-chart")
+            expect(chart_box).to_be_visible()
+            expect(page.get_by_test_id("chart-provenance")).to_contain_text("Stored history")
+            expect(page.get_by_test_id("candle-time")).to_contain_text("IST")
+            expect(page.get_by_test_id("candle-time")).not_to_contain_text("session start")
+            box = chart_box.bounding_box()
+            assert box
+            page.mouse.move(box["x"] + box["width"] * 0.2, box["y"] + 150)
+            page.wait_for_timeout(150)
+            first = page.get_by_test_id("candle-time").inner_text()
+            page.mouse.move(box["x"] + box["width"] * 0.65, box["y"] + 150)
+            page.wait_for_timeout(150)
+            second = page.get_by_test_id("candle-time").inner_text()
+            assert first != second, f"hover did not change candle time: {first}"
+            page.screenshot(path=str(shots / "chart-5m-hover.png"), full_page=True)
+            page.get_by_role("button", name="Custom", exact=True).click()
+            page.get_by_label("Custom interval amount").fill("7")
+            page.get_by_role("button", name="Apply interval").click()
+            page.wait_for_load_state("networkidle")
+            expect(page.get_by_test_id("chart-provenance")).to_contain_text("7m candles")
+            expect(page.get_by_test_id("price-chart")).to_be_visible()
+            page.get_by_role("button", name="Custom", exact=True).click()
+            page.get_by_role("combobox", name="Custom interval unit").click()
+            page.get_by_role("option", name="Seconds", exact=True).click()
+            expect(page.get_by_role("button", name="Apply interval")).to_be_disabled()
+            expect(page.get_by_text("Seconds need a recorded tick-data feed.", exact=False)).to_be_visible()
+            page.keyboard.press("Escape")
+            page.get_by_role("radiogroup", name="Candle interval").get_by_role("radio", name="1M", exact=True).click()
+            page.wait_for_load_state("networkidle")
+            expect(page.get_by_test_id("price-chart")).to_be_visible()
+            expect(page.get_by_test_id("candle-time")).to_contain_text("period start")
+            page.screenshot(path=str(shots / "chart-monthly.png"), full_page=True)
+            page.get_by_role("radiogroup", name="Candle interval").get_by_role("radio", name="1d", exact=True).click()
+        check("chart: 5m/7m/monthly, IST hover, honest seconds limit", chart_intervals)
+
+        def chart_missing_data():
+            page.goto(BASE + "/chart?symbol=SBIN&interval=5m")
+            page.wait_for_load_state("networkidle")
+            expect(page.get_by_test_id("chart-no-data")).to_be_visible()
+            expect(page.get_by_test_id("price-chart")).to_have_count(0)
+            expect(page.get_by_role("button", name="Download / update candles")).to_be_enabled()
+            page.get_by_role("radiogroup", name="Candle interval").get_by_role("radio", name="1d", exact=True).click()
+        check("chart: missing minute history never displays daily bars", chart_missing_data)
+
+        if chart_only:
+            browser.close()
+            return passed, problems, sorted(set(errors))
 
         def builder():
             page.goto(BASE + "/builder")
@@ -223,14 +290,14 @@ def main() -> int:
     if not (ROOT / "frontend" / "dist" / "index.html").exists():
         sys.exit("Build the UI first: cd frontend; npm run build")
     tmp = Path(tempfile.mkdtemp(prefix="mv-e2e-"))
-    shots = tmp / "shots"
-    shots.mkdir()
+    shots = ROOT / "output" / "playwright" / "ui-e2e"
+    shots.mkdir(parents=True, exist_ok=True)
     env = make_env(tmp)
     server = subprocess.Popen([sys.executable, "-m", "uvicorn", "market_view.api.app:app", "--host", "127.0.0.1",
                                "--port", str(PORT), "--log-level", "warning"], cwd=ROOT, env=env)
     try:
         wait_server(server)
-        passed, problems, errors = run("--headed" in sys.argv, tmp / "custom", shots)
+        passed, problems, errors = run("--headed" in sys.argv, tmp / "custom", shots, "--chart-only" in sys.argv)
     finally:
         server.terminate()
         server.wait(timeout=20)
