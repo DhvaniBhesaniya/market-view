@@ -1,0 +1,13 @@
+# Paper trading — see docs/12-paper-trading-runbook.md
+
+initial_capital: 500000
+product: CNC                      # delivery, swing trading
+live_data_source: auto            # auto = upstox if UPSTOX_ACCESS_TOKEN set, else yfinance (delayed)
+history_source: auto              # same rule, for daily candles
+
+schedule:                         # IST, trading days only (config/nse_calendar.yaml)
+  open_job: "09:20"               # execute pending exits, then entries
+  monitor_every_minutes: 5        # check stops/targets during the session
+  eod_job: "15:45"                # update data, manage positions, generate next-day signals
+
+stale_data_seconds: 900           # kill switch if quotes older than this during market hours (yfinance is ~15 min delayed)

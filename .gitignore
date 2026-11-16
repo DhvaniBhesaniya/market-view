@@ -12,6 +12,8 @@ data/
 *.parquet
 mlruns/
 backtesting/**/output/
+reports/
+trader/
 
 # --- Python ---
 __pycache__/

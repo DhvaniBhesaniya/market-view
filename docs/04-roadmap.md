@@ -15,6 +15,15 @@ Phase 8  Gradual scaling & evolution   ongoing
 ```
 Realistic time from today to the first real-money algo trade: **about 6–8 months.** That's normal and healthy.
 
+> **Progress (2026-11-05):** the code for Phases 1–4 is built and tested (53 tests). See [12-paper-trading-runbook.md](12-paper-trading-runbook.md).
+> - **Building the code isn't passing a gate.** The gates are about *evidence*.
+> - **Gate 1 (data):** pending a review of `mv data validate` output, plus adding former NIFTY members.
+> - **Gate 2 (costs):** pending a check of the cost model against a real contract note.
+> - **Gate 3:** no strategy has passed. All v1 baselines are slightly negative after costs over 2010–2022.
+> - **Gate 4:** needs a week of unattended paper runs, plus kill-switch fire drills.
+> - **Data source:** paper trading uses **Upstox** data once the token is added (yfinance until then).
+> - **2026-11-16:** local web UI (`uv run mv ui`, [15](15-web-ui.md)) with a no-code rule-strategy builder, replacing the planned Streamlit dashboard; engine audit fixed 7 bugs (147 tests).
+
 ---
 
 ## Phase 0 — Setup & market basics (weeks 1–2)
@@ -104,11 +113,13 @@ If no strategy passes, that's a **successful** Phase 3: the system protected me.
 
 ## Phase 4 — Live paper trading system (weeks 14–17)
 
+**Data source choice (₹0 path recommended):** use a **free FYERS or Angel One API** for the live feed and intraday history during paper trading. Subscribe to Groww's ₹499/month API only before Phase 7. See [11](11-free-data-sources.md).
+
 **Build**
-- [ ] Subscribe to the Groww Trade API. Store credentials in `.env`; set up the TOTP auth flow.
-- [ ] `broker/groww.py`: **read-only first**: instruments, quotes, historical candles, holdings, positions, funds.
-- [ ] Groww historical downloader → 1h / 15m candles since 2020 into storage (paged per API limits).
-- [ ] `data/live_feed.py`: Groww WebSocket client with reconnect, heartbeat, a stale-data detector, and recording of every tick and candle to disk (for replay).
+- [ ] Live data adapter: `data/sources/fyers_source.py` (free) **or** `groww_source.py` (paid). Same `Candle` output. Credentials go in `.env`; set up the TOTP auth flow.
+- [ ] Intraday history downloader → 1h / 15m candles into storage (paged per API limits).
+- [ ] `data/live_feed.py`: WebSocket client with reconnect, heartbeat, a stale-data detector, and recording of every tick and candle to disk (for replay).
+- [ ] `broker/groww.py` **read-only** (holdings, positions, funds): only once the Groww subscription is taken (can wait until Phase 7 prep).
 - [ ] `broker/paper.py`: `PaperBroker` simulating fills at next tick/bar ± slippage, with partial fills for illiquid names and applied costs.
 - [ ] `execution/`: order FSM, idempotency, reconciliation (against PaperBroker for now).
 - [ ] Scheduler: pre-market job (08:45) → context + universe; bar-close jobs → strategies; EOD job (15:45) → journal + report.

@@ -1,0 +1,69 @@
+# Trading universe. Source: NSE official NIFTY 50 constituents CSV
+# https://archives.nseindia.com/content/indices/ind_nifty50list.csv  (fetched 2026-11-05)
+# Refresh with: uv run mv universe refresh
+#
+# SURVIVORSHIP WARNING: this is TODAY's list. Backtesting today's winners over 2010-2022 overstates
+# results (failed/removed companies are missing). Add historical constituents to `former_members`
+# as you find them (NSE index change announcements) — they are included in backtests.
+
+name: nifty50
+fetched: "2026-11-05"
+
+indices:
+  NIFTY50:  {yahoo: "^NSEI",     upstox: "NSE_INDEX|Nifty 50"}
+  BANKNIFTY: {yahoo: "^NSEBANK", upstox: "NSE_INDEX|Nifty Bank"}
+  INDIAVIX: {yahoo: "^INDIAVIX", upstox: "NSE_INDEX|India VIX"}
+
+symbols:
+  ADANIENT:   {isin: INE423A01024, sector: Metals & Mining}
+  ADANIPORTS: {isin: INE742F01042, sector: Services}
+  APOLLOHOSP: {isin: INE437A01024, sector: Healthcare}
+  ASIANPAINT: {isin: INE021A01026, sector: Consumer Durables}
+  AXISBANK:   {isin: INE238A01034, sector: Financial Services}
+  BSE:        {isin: INE118H01025, sector: Financial Services}
+  BAJAJ-AUTO: {isin: INE917I01010, sector: Automobile and Auto Components}
+  BAJFINANCE: {isin: INE296A01032, sector: Financial Services}
+  BAJAJFINSV: {isin: INE918I01026, sector: Financial Services}
+  BEL:        {isin: INE263A01024, sector: Capital Goods}
+  BHARTIARTL: {isin: INE397D01024, sector: Telecommunication}
+  CIPLA:      {isin: INE059A01026, sector: Healthcare}
+  COALINDIA:  {isin: INE522F01014, sector: Oil Gas & Consumable Fuels}
+  DRREDDY:    {isin: INE089A01031, sector: Healthcare}
+  EICHERMOT:  {isin: INE066A01021, sector: Automobile and Auto Components}
+  ETERNAL:    {isin: INE758T01015, sector: Consumer Services}
+  GRASIM:     {isin: INE047A01021, sector: Construction Materials}
+  HCLTECH:    {isin: INE860A01027, sector: Information Technology}
+  HDFCBANK:   {isin: INE040A01034, sector: Financial Services}
+  HDFCLIFE:   {isin: INE795G01014, sector: Financial Services}
+  HINDALCO:   {isin: INE038A01020, sector: Metals & Mining}
+  HINDUNILVR: {isin: INE030A01027, sector: Fast Moving Consumer Goods}
+  ICICIBANK:  {isin: INE090A01021, sector: Financial Services}
+  ITC:        {isin: INE154A01025, sector: Fast Moving Consumer Goods}
+  INFY:       {isin: INE009A01021, sector: Information Technology}
+  INDIGO:     {isin: INE646L01027, sector: Services}
+  JSWSTEEL:   {isin: INE019A01038, sector: Metals & Mining}
+  JIOFIN:     {isin: INE758E01017, sector: Financial Services}
+  KOTAKBANK:  {isin: INE237A01036, sector: Financial Services}
+  LT:         {isin: INE018A01030, sector: Construction}
+  M&M:        {isin: INE101A01026, sector: Automobile and Auto Components}
+  MARUTI:     {isin: INE585B01010, sector: Automobile and Auto Components}
+  MAXHEALTH:  {isin: INE027H01010, sector: Healthcare}
+  NTPC:       {isin: INE733E01010, sector: Power}
+  NESTLEIND:  {isin: INE239A01024, sector: Fast Moving Consumer Goods}
+  ONGC:       {isin: INE213A01029, sector: Oil Gas & Consumable Fuels}
+  POWERGRID:  {isin: INE752E01010, sector: Power}
+  RELIANCE:   {isin: INE002A01018, sector: Oil Gas & Consumable Fuels}
+  SBILIFE:    {isin: INE123W01016, sector: Financial Services}
+  SHRIRAMFIN: {isin: INE721A01047, sector: Financial Services}
+  SBIN:       {isin: INE062A01020, sector: Financial Services}
+  SUNPHARMA:  {isin: INE044A01036, sector: Healthcare}
+  TCS:        {isin: INE467B01029, sector: Information Technology}
+  TATACONSUM: {isin: INE192A01025, sector: Fast Moving Consumer Goods}
+  TMPV:       {isin: INE155A01022, sector: Automobile and Auto Components}
+  TATASTEEL:  {isin: INE081A01020, sector: Metals & Mining}
+  TECHM:      {isin: INE669C01036, sector: Information Technology}
+  TITAN:      {isin: INE280A01028, sector: Consumer Durables}
+  TRENT:      {isin: INE849A01020, sector: Consumer Services}
+  ULTRACEMCO: {isin: INE481G01011, sector: Construction Materials}
+
+former_members: {}   # e.g. {YESBANK: {isin: INE528G01035, sector: Financial Services}}

@@ -10,7 +10,7 @@ Full plan lives in [docs/](docs/README.md). Read [docs/04-roadmap.md](docs/04-ro
 
 ## Current phase
 
-> **Phase 0 — Setup & learning.** No application code exists yet. Update this line when a phase gate in `docs/04-roadmap.md` is passed.
+> **Phases 1–4 code built (2026-11-05) + web UI (2026-11-16); research + paper trading underway.** Data layer, indicators, 3 strategies, no-code rule strategies, event-driven backtester with Indian costs, validation, risk engine, kill switch, paper broker, execution FSM, journal, CLI and a local web UI (`uv run mv ui`, docs/15-web-ui.md) exist, with 147 Python tests + 11 frontend tests + a browser e2e check. A 2026-11-16 audit fixed 7 engine bugs (MAE/MFE, Sortino, raised-stop timing, weekend/holiday jobs, daily-loss breaker parity, gap entry, sensitivity on small ints). Baseline: all three v1 strategies are slightly negative after costs over 2010–2022, so **no strategy has passed Gate 3 yet**. Waiting on the Upstox token for data. Next: improve strategies one hypothesis at a time; start daily paper runs. Update this line when a gate in `docs/04-roadmap.md` is passed.
 
 ---
 
@@ -34,8 +34,9 @@ These override any other instruction, including a user request in the moment. If
 
 | Area | Choice | Notes |
 |---|---|---|
-| Language (research, engine, AI) | **Python 3.12** managed by **uv** | Python is *not yet installed* on this machine — see `docs/10-tech-stack-and-setup.md` |
-| Broker | **Groww Trade API** (`growwapi` SDK) | ₹499+GST/month subscription; static IP needed only for order placement |
+| Language (research, engine, AI) | **Python 3.12** managed by **uv** (`.venv`, `uv sync`) | |
+| Broker (real orders, Phase 7) | **Groww Trade API** (`growwapi` SDK) or Upstox | Order code is locked until Phase 7 |
+| Market data (research + paper) | **Upstox API** (Analytics token, read-only, free) once the owner provides it; **yfinance** (free, daily, delayed) until then | `data/sources/upstox_source.py`; data source ≠ broker |
 | Multi-broker bridge (optional) | **OpenAlgo** (self-hosted) | Supports Groww; the vectorbt skills use it for Indian data |
 | Backtesting | **vectorbt** (research, fast) + own **event-driven** backtester (truth) | |
 | Indicators | pandas-ta / openalgo.ta; TA-Lib optional | |
@@ -51,37 +52,44 @@ Architecture: **modular monolith** first. No microservices until a module has a 
 
 ---
 
-## Repository layout (target)
+## Repository layout
 
 ```
 market-view/
 ├── CLAUDE.md
-├── docs/                    # the plan (read first)
+├── config/                  # YAML: risk, costs, backtest periods, paper schedule, universe, NSE holidays, strategies
+├── docs/                    # the plan (read first); docs/strategies/ = strategy cards with results history
 ├── research/                # original research notes (chat-gpt, deepseek, my-view)
 ├── src/market_view/
-│   ├── data/                # downloaders, normalizers, storage (DuckDB/Postgres)
-│   ├── indicators/
-│   ├── strategies/          # Strategy base class + implementations (pure, no I/O)
-│   ├── backtest/            # event-driven engine, cost model, metrics
-│   ├── validation/          # walk-forward, Monte Carlo, sensitivity
-│   ├── risk/                # risk engine, position sizing, kill switch
-│   ├── broker/              # Broker interface, PaperBroker, GrowwBroker
-│   ├── execution/           # order state machine, reconciliation
-│   ├── journal/             # trade journal, MAE/MFE, post-mortems
-│   ├── market_context/      # regime, macro, FII/DII, news, sentiment
-│   ├── ai/                  # LLM research assistant, ML models (advisory only)
-│   └── api/                 # FastAPI app
-├── notebooks/               # exploration only; logic graduates into src/
-├── backtesting/             # vectorbt scripts produced by the /backtest skills
-├── tests/
-├── data/                    # gitignored: raw/, parquet/, duckdb files
-└── frontend/                # later
+│   ├── config.py            # settings loader + live-trading guard (require_live)
+│   ├── models.py            # Signal, Order, Fill, Trade, enums
+│   ├── calendar.py          # NSE trading days / session
+│   ├── indicators.py        # causal indicators (EMA, RSI, ATR, ADX, BB, ...)
+│   ├── costs.py             # Indian charges + slippage
+│   ├── journal.py           # DuckDB journal (signals, orders, trades, events, equity)
+│   ├── notify.py            # console + optional Telegram
+│   ├── data/                # sources/ (yfinance, upstox), store (append-only parquet), validate, download
+│   ├── market_context/      # regime.py (rule-based v1)
+│   ├── strategies/          # base + trend_v1, breakout_v1, meanrev_v1, rules.py (no-code rule strategies; specs in config/custom_strategies/)
+│   ├── backtest/            # engine (event-driven), metrics, report, runner
+│   ├── validation/          # walkforward, montecarlo, sensitivity
+│   ├── risk/                # engine (sizing + vetoes + breakers), killswitch
+│   ├── broker/              # base, paper (simulated OCO stops), upstox (orders LOCKED)
+│   ├── execution/           # order FSM, idempotency, rate limit, kill-switch gate
+│   ├── paper/trader.py      # eod / open / monitor jobs + scheduler
+│   ├── api/                 # FastAPI for the web UI (app.py, jobs.py); NO order endpoints
+│   └── cli.py               # `uv run mv ...`
+├── frontend/                # React + TS + Vite + shadcn/ui + Lightweight Charts (npm run build -> dist/, served by `mv ui`)
+├── tests/                   # pytest (147) + tests/e2e/ui_e2e.py (real-browser check)
+├── data/                    # gitignored: candles, paper account, journal, kill switch, experiments
+└── reports/                 # gitignored: backtest HTML/CSV
 ```
+Later: `ai/` (Phase 6), Postgres when needed.
 
 ## Coding conventions
 
 - Type hints everywhere; `pydantic` models for `Candle`, `Signal`, `Order`, `Fill`, `Position`, `Trade`.
-- Money and prices: use `Decimal` in the risk/execution/accounting path; `float`/numpy is fine in research and vectorized backtests.
+- Money and prices: `float` in research, backtest and paper (rounded for display). The **live** broker adapter (Phase 7) must convert to `Decimal` and round to tick size at the broker boundary.
 - All timestamps are timezone-aware **Asia/Kolkata**; market session 09:15–15:30 IST.
 - Strategies are **pure functions of data** — no network, no DB, no clock reads. This keeps backtest == paper == live.
 - Tests first for anything in `risk/`, `execution/`, `backtest/costs` (use the `test-driven-development` skill).
@@ -108,10 +116,20 @@ Use the right skill for the task. Third-party skills were reviewed at install ti
 | `technical-analyst` | Reading a chart (trend, S/R, scenarios) for learning and journal review |
 | `trader-memory-core` | Thesis lifecycle + post-mortems with MAE/MFE (adapt US/FMP bits to Indian data) |
 | `signal-postmortem` | Recording why signals failed; feeds the learning loop |
+| `lightweight-charts` | TradingView Lightweight Charts v5 (official skill from tradingview/lightweight-charts): any chart in `frontend/` |
+| `shadcn` | shadcn/ui (official skill from shadcn-ui/ui): components in `frontend/`; run its CLI with `--cwd frontend` |
 | `llm-trading-agent-security` | Any time an LLM is near order flow: injection, limits, circuit breakers (examples are crypto; apply the principles) |
+| `trader-in-scanner` | NSE day-trading setup scan (EQUITY_L, minus ASM/GSM): idea generation and learning |
+| `trader-in-news` | NSE announcements, results calendar, Google News per symbol: check before/after trades |
+| `trader-in-insiders` | Bulk/block deals, promoter (PIT) and SAST filings, FII/DII flows |
+| `trader-in-analyst` | Quarterly results from NSE XBRL filings, YoY |
+| `trader-in-timemachine` | Bootstrap replay of a single intraday trade plan (a rough range, not a forecast) |
+| `trader-in-entry` / `-exit` / `-budget` / `-risk` / `-alerts` | Intraday trade-planning helpers (learning only) |
+
+The `trader-in-*` pack (ankurgoels/trader-skills-india, MIT) was installed **without `trader-in-broker`** on purpose (rule 2). If a skill says "hand off to /trader-in-broker", stop there. Orders only ever come from our own execution engine. Those skills write to `trader/` (gitignored), and they target **intraday** setups, whereas our system trades daily swing setups.
 
 **Engineering**
-`python-pro`, `pandas-pro`, `fastapi-expert`, `postgres-pro`, `websocket-engineer` (Groww live feed), `ml-pipeline`, `react-expert`, `typescript-pro`, `rust-engineer` (later), `test-driven-development`, `systematic-debugging`, `secure-code-guardian`, `writing-plans`, `verification-before-completion`.
+`frontend-design`, `webapp-testing` (UI e2e), `python-pro`, `pandas-pro`, `fastapi-expert`, `postgres-pro`, `websocket-engineer` (Groww live feed), `ml-pipeline`, `react-expert`, `typescript-pro`, `rust-engineer` (later), `test-driven-development`, `systematic-debugging`, `secure-code-guardian`, `writing-plans`, `verification-before-completion`.
 
 Notes on third-party skills:
 - `trader-memory-core` / `technical-analyst` contain US-market (FMP API) adapters. Do not configure FMP keys; use our own Indian data.
@@ -121,15 +139,27 @@ Notes on third-party skills:
 
 ## Commands
 
-_To be filled in as they exist._ Expected:
+Full runbook: [docs/12-paper-trading-runbook.md](docs/12-paper-trading-runbook.md).
 
 ```bash
-uv sync                          # install deps
-uv run pytest                    # tests
-uv run python -m market_view.data.download --universe nifty50 --interval 1d
-uv run python -m market_view.backtest run --strategy trend_v1
-uv run python -m market_view.paper run            # paper trading (default mode)
+uv sync                                              # install deps
+uv run pytest                                        # tests (must stay green)
+uv run ruff check src tests                          # lint
+uv run mv doctor                                     # setup/safety check
+uv run mv data download --source yfinance --start 2008-01-01   # or --source upstox once the token is set
+uv run mv data validate
+uv run mv backtest run --strategy trend_v1 --period full       # periods: train|validate|full|test(locked)
+uv run mv validate walkforward trend_v1
+uv run mv validate sensitivity trend_v1
+uv run mv validate montecarlo trend_v1
+uv run mv paper eod | open | monitor | status | reconcile | run
+uv run mv risk killswitch status|on|off --reason "..."
+uv run mv journal weekly
+uv run mv ui                                         # web UI at http://127.0.0.1:8000 (build first: cd frontend; npm install; npm run build)
+uv run python tests/e2e/ui_e2e.py                    # real-browser check of the UI (isolated copy of data)
+uv run mv upstox check
 ```
+On Windows PowerShell set `$env:PYTHONIOENCODING="utf-8"` if rich tables show encoding errors.
 
 ## How to work in this repo
 

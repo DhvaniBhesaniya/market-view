@@ -1,0 +1,29 @@
+# Indian transaction costs (NSE equity). Verify against your broker's pricing page and a real
+# contract note before trusting results (Gate 2 in docs/04-roadmap.md). Rates as of Nov 2026.
+
+delivery:                 # CNC
+  brokerage_flat: 20.0    # Rs per executed order (Upstox / Groww style: Rs 20 or pct, whichever lower)
+  brokerage_pct: 0.10     # % of order value
+  brokerage_min: 5.0      # Groww: if brokerage < Rs 5, charge the LOWER of Rs 5 or 2.5% of the order value
+  brokerage_min_pct: 2.5  # (groww.in help: "charges for delivery", checked 2026-11-16)
+  stt_buy_pct: 0.1
+  stt_sell_pct: 0.1
+  exchange_txn_pct: 0.00307  # NSE may be 0.00297% since Oct 2024: confirm on a contract note (Gate 2)
+  sebi_pct: 0.0001
+  stamp_buy_pct: 0.015
+  gst_pct: 18.0           # on brokerage + exchange + SEBI
+  dp_charge_per_sell: 20.0  # depository charge per scrip per sell day (approx, incl. GST)
+
+intraday:                 # MIS
+  brokerage_flat: 20.0
+  brokerage_pct: 0.05
+  brokerage_min: 0.0
+  stt_buy_pct: 0.0
+  stt_sell_pct: 0.025
+  exchange_txn_pct: 0.00307
+  sebi_pct: 0.0001
+  stamp_buy_pct: 0.003
+  gst_pct: 18.0
+  dp_charge_per_sell: 0.0
+
+slippage_bps: 5.0         # 0.05% per side, applied to every fill (worse price)

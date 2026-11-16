@@ -85,3 +85,29 @@ Reinforcement learning or fully autonomous agents are **out of scope** until (a)
 - [ ] Every AI output is stored with model ID + prompt version for later evaluation.
 - [ ] API keys live in `.env`; per-month spend limits are set in the provider console.
 - [ ] Each AI component has a measured, out-of-sample benefit, or it's turned off.
+
+## 6. Multi-agent "analyst team" skills (Day Trader Skill & similar), evaluated 2026-11-05
+
+Popular Claude skill packs split trading into specialist "agents": a scanner, news, entry timer, exit planner, a "time machine" simulator, risk, budget, broker, and so on.
+
+| Pack | What it is | Fit for us |
+|---|---|---|
+| `Jakeschincariol/day-trader-skill` | 11 skills, US stocks, Yahoo 1m/5m bars, Alpaca paper broker | US only. Ideas worth borrowing |
+| `ankurgoels/trader-skills-india` | NSE port of the above: NSE announcements/XBRL results, FII/DII + bulk deals, Yahoo/bhavcopy candles, Zerodha order *tickets* (dry run) | Useful as a **learning companion**. Very new (≈1 star, a handful of commits), so review before use |
+| `zubair-trabzada/ai-trading-claude` | 5 parallel agents (technical, fundamental, sentiment, risk, thesis) using web search, PDF reports | Research reports only; US-oriented; no data feed |
+
+**What's good:** the pipeline shape (scanner → news → entry → exit → simulate → risk → size → broker) matches our architecture, the risk checks come before the broker, and paper trading is the default.
+
+**Limits:**
+1. **"Time machine" = bootstrap Monte Carlo** of the last ~59 sessions of 5-minute bars. It's a useful *range of outcomes*, but it treats bars as independent (it ignores trends and volatility clustering) and uses a short sample. It's a rough probability, not a forecast.
+2. **On-demand LLM analysis isn't a backtest.** You can't reproduce it across 10 years of data, so it can't pass our validation gates.
+3. **Day trading** on 5-minute bars is the hardest style for a beginner, and it isn't our starting style (daily swing).
+4. **The broker skills conflict with CLAUDE.md rule 2.** An LLM drafting orders, even with a typed "yes", is not allowed in our system.
+
+**Decision:**
+- Optionally install the India pack **without** `trader-in-broker`, as a research/learning tool (scanner, news, insiders, analyst, time machine).
+- Re-implement the good ideas inside our engine, where they can be tested:
+  - time machine → `validation/` (Monte Carlo + "every past time this setup fired" statistics on 10+ years of data)
+  - scanner → Phase 4
+  - news/insiders/FII → `market_context/`
+- A Phase-6 **Claude analyst team** (technical, macro/flows, news/sentiment, bull vs bear debate, risk reviewer) running as parallel subagents is a reasonable *pre-market research report* feature. Its output is a stored, scored report: advisory only, measured like every other AI component.

@@ -1,0 +1,336 @@
+{
+  "version": 1,
+  "prepared_on": "2026-11-16",
+  "scope": "repository",
+  "skills": [
+    {
+      "name": "jupyter-notebook",
+      "path": ".agents/skills/jupyter-notebook",
+      "origin": "openai/skills",
+      "files_sha256": {
+        "agents/openai.yaml": "3a2d6a8f9ed10e18f6caa66aeb26a02305bc61f36fc4b333c904e02f9988fb9c",
+        "assets/experiment-template.ipynb": "25f85914103cd84244e20ef378f59097479c72481cd18d3a931354d107c3f300",
+        "assets/jupyter-small.svg": "a36bd27bef3775f111309241754b386db81e7d356f07672190e2fcb24478a250",
+        "assets/jupyter.png": "852fd5468885bb176d266d547e61684792332e44a88cfbc8cd07323937040ccb",
+        "assets/tutorial-template.ipynb": "704a809c09c7c9e6e5c437860df95524412b50c58571a14204610d73e0744765",
+        "LICENSE.txt": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "references/experiment-patterns.md": "1ff9c04281c01e8e2209bde9f1fd910b8e4b620dd1f1f040e2101f1d88513a91",
+        "references/notebook-structure.md": "a85051a2e88fd3424bbed2636e952ec5f858e7efa4e076c28d62a8cc2cc9dc06",
+        "references/quality-checklist.md": "ed01afe6ff47714d85935d11053b64c414772f02250fdc604e3fca65e5139136",
+        "references/tutorial-patterns.md": "8c194bb640de2fb7747e3db87006ecec5219252d301f53670975dbb5310ff659",
+        "scripts/new_notebook.py": "a004e2ea3115edb24313928be0be6d1dc07e571d7ca6c1b24375f0569c616d2f",
+        "SKILL.md": "62f102e8554b25716dccef0ffab4572d4e3eaf05ccc76562d33a065bc9c521fb"
+      },
+      "ref": "49f948faa9258a0c61caceaf225e179651397431",
+      "upstream_path": "skills/.curated/jupyter-notebook"
+    },
+    {
+      "name": "market-view-ai-research",
+      "path": ".agents/skills/market-view-ai-research",
+      "origin": "project-authored",
+      "files_sha256": {
+        "SKILL.md": "861ed2a03928995d64df79b7e987b20bb5a43f747ebde1cf13713e063846d807"
+      }
+    },
+    {
+      "name": "market-view-app-development",
+      "path": ".agents/skills/market-view-app-development",
+      "origin": "project-authored",
+      "files_sha256": {
+        "SKILL.md": "57356cb54968c2c2aef31a39708c731175aa8bd9b0af78151dec4df89bfd7971"
+      }
+    },
+    {
+      "name": "market-view-backtest-validation",
+      "path": ".agents/skills/market-view-backtest-validation",
+      "origin": "project-authored",
+      "files_sha256": {
+        "SKILL.md": "35f5dcea505c066465716e295f89a7b9128b976a0d5f1e08835cf77b606ffc40"
+      }
+    },
+    {
+      "name": "market-view-market-data",
+      "path": ".agents/skills/market-view-market-data",
+      "origin": "project-authored",
+      "files_sha256": {
+        "SKILL.md": "e24147c4cac8d80ba4630cf6e41c189b64be573fe0c3fcda8564f51d9900dff7"
+      }
+    },
+    {
+      "name": "market-view-risk-execution",
+      "path": ".agents/skills/market-view-risk-execution",
+      "origin": "project-authored",
+      "files_sha256": {
+        "SKILL.md": "34f97c889a38952fd88f1e1c5ae2705837a47642cd67bd6e2d904dce37dc457c"
+      }
+    },
+    {
+      "name": "market-view-strategy-research",
+      "path": ".agents/skills/market-view-strategy-research",
+      "origin": "project-authored",
+      "files_sha256": {
+        "SKILL.md": "a0ab54c60a1437b426570f42c82d760954b565fcc002f0f29a1821dcce734158"
+      }
+    },
+    {
+      "name": "market-view-trade-review",
+      "path": ".agents/skills/market-view-trade-review",
+      "origin": "project-authored",
+      "files_sha256": {
+        "SKILL.md": "58a1ed866bb49f45485e5384306a29f18889c95e4c829190f212d3e2d2dc6686"
+      }
+    },
+    {
+      "name": "playwright",
+      "path": ".agents/skills/playwright",
+      "origin": "openai/skills",
+      "files_sha256": {
+        "agents/openai.yaml": "ddda43720fc566fffa45264be8f17f7745a3cee28d5245d41d3b963bc9967230",
+        "assets/playwright-small.svg": "f1d213c0f76735d8272c3d3e9fbf71fe7b894e2d1588907044c780f2c33a9732",
+        "assets/playwright.png": "521669f088c838196c6c852ccc9abdd7234d8f37fc9a8a7a9af7db2d50193381",
+        "LICENSE.txt": "9a7110fc2d2f964038e5dc49128f908f29f47a574c961cba16085914e879cbda",
+        "NOTICE.txt": "417d5d3372914ecfd9fe102ac1d7dc2119253209f9718d6c222f616876c1904b",
+        "references/cli.md": "7c069a8206ba20b9ddbdc42436b04de30bb3aa4a825ba98680757ee62e954900",
+        "references/workflows.md": "a2b5835a00ebee3906c146adf7f764f7718ea3f89a8702d86eaa135dfe0fc8c2",
+        "scripts/playwright_cli.sh": "aa3fdff5d0e4556177f4dfd5f04117e772aa54f94b6a2e34b6c0edf629c6b9b5",
+        "SKILL.md": "0ffaabcc8e0990627c4725f18bf1c7955534a796c1c199e872909de2013ce6a8"
+      },
+      "ref": "49f948faa9258a0c61caceaf225e179651397431",
+      "upstream_path": "skills/.curated/playwright"
+    },
+    {
+      "name": "security-best-practices",
+      "path": ".agents/skills/security-best-practices",
+      "origin": "openai/skills",
+      "files_sha256": {
+        "agents/openai.yaml": "6e9c6f2edce448eb2b589f81ad6e3f722665021785513bcbfd0bf7b86b529171",
+        "LICENSE.txt": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "references/golang-general-backend-security.md": "a73c47c34497b120672d48411fe51dc90d426a571801a0b3f649e2ce4ec658b4",
+        "references/javascript-express-web-server-security.md": "427835cbb5be7ba96172ea6ca9af80ddd4419c833e9ebf870996740c80d8406c",
+        "references/javascript-general-web-frontend-security.md": "3a7bc7b3f6e7ff043db9dbaa8933894d7a19d987d0607e4ddae5d70184a63d63",
+        "references/javascript-jquery-web-frontend-security.md": "bcbad2fa6c2a02709e47e889e70102c76886bf36bc798624d27db570eccf40da",
+        "references/javascript-typescript-nextjs-web-server-security.md": "71c773f7a97ce60c853adfa100b3d88b3b7bc4c6b8acaef1432ffabd923ee182",
+        "references/javascript-typescript-react-web-frontend-security.md": "d3030c0f24bddb56b9bbb91bbec1ee49eb7778bce4d3e0297b2641b2fc6b0d9c",
+        "references/javascript-typescript-vue-web-frontend-security.md": "77c6a747f9f17e3df03aad0fcb20d99ac7898001b81aef8b80908e45ac14a688",
+        "references/python-django-web-server-security.md": "4fb69b5d45f10e588d1a8c35cdc5f59e18910f6b46a93e2d342d90f286f8dfd2",
+        "references/python-fastapi-web-server-security.md": "7383c7f4fc271190b05e562ada7e825982a2c76b6c79a9f95a1da7687b65a616",
+        "references/python-flask-web-server-security.md": "9606d69190c04c167fdeac57e61297547a57b0542fd89dede36f355970446929",
+        "SKILL.md": "7b3dae1ffc5434d890f3c65c8f552af52d0307fab3b35dec13013c9ca3844c4f"
+      },
+      "ref": "49f948faa9258a0c61caceaf225e179651397431",
+      "upstream_path": "skills/.curated/security-best-practices"
+    },
+    {
+      "name": "security-threat-model",
+      "path": ".agents/skills/security-threat-model",
+      "origin": "openai/skills",
+      "files_sha256": {
+        "agents/openai.yaml": "3319b59736312abceca614e341c0e59cae47263e3b58a22b2b5ddf1e5fc8c227",
+        "LICENSE.txt": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "references/prompt-template.md": "81a59aa3fb3ac3a739d6a26ab38e4015965f215581ee54becef21a2b121ec29b",
+        "references/security-controls-and-assets.md": "d536cfa9acad2523dc39134bcf33b9566c29dd9a57b407cbc9901637230c6b98",
+        "SKILL.md": "1283c0dd62a8104d9edda4583569b5d8510b4ddaa45120687c999250fd96bad2"
+      },
+      "ref": "49f948faa9258a0c61caceaf225e179651397431",
+      "upstream_path": "skills/.curated/security-threat-model"
+    }
+  ],
+  "existing_reference_manifests": [
+    {
+      "name": "backtest",
+      "manifest": ".claude/skills/backtest/SKILL.md",
+      "manifest_sha256": "605e2229ce96d258a25e211b23e3830feb5c32efc8978b5d1e55e71b7846b762"
+    },
+    {
+      "name": "backtest-expert",
+      "manifest": ".claude/skills/backtest-expert/SKILL.md",
+      "manifest_sha256": "f2c9ce6501b574cdf1cc35b757b5dfc3cb5e234222af84e67ce07775dfdc689d"
+    },
+    {
+      "name": "backtesting-frameworks",
+      "manifest": ".claude/skills/backtesting-frameworks/SKILL.md",
+      "manifest_sha256": "287da6eaeec071d3af2bf4e03520abbb433b3e299c99aa998230182d64c9fe83"
+    },
+    {
+      "name": "fastapi-expert",
+      "manifest": ".claude/skills/fastapi-expert/SKILL.md",
+      "manifest_sha256": "fb11b40659e4a1be1b230786fe00f5892bfb72db499e7dda6c40a99e2cdcc78b"
+    },
+    {
+      "name": "lightweight-charts",
+      "manifest": ".claude/skills/lightweight-charts/SKILL.md",
+      "manifest_sha256": "47d36bf245e21c878d6cfe3d3a5addf29b11bc69c2cf0d1c8a36023e821c2228"
+    },
+    {
+      "name": "llm-trading-agent-security",
+      "manifest": ".claude/skills/llm-trading-agent-security/SKILL.md",
+      "manifest_sha256": "8a59b241f6ae86d8f96b88122643b4d27d70adb6c15b31f5163f9586cb81b293"
+    },
+    {
+      "name": "ml-pipeline",
+      "manifest": ".claude/skills/ml-pipeline/SKILL.md",
+      "manifest_sha256": "76e40a5b127d1adc8ab0ff2536a6ae36701b60f3f2e8b590b911a721427ae1cb"
+    },
+    {
+      "name": "optimize",
+      "manifest": ".claude/skills/optimize/SKILL.md",
+      "manifest_sha256": "485f712934a2cde6a410678579767f4c1abc46840101e5c6a0f9f77c75df3c64"
+    },
+    {
+      "name": "pandas-pro",
+      "manifest": ".claude/skills/pandas-pro/SKILL.md",
+      "manifest_sha256": "4764c7b15ceaf47fc62b4bfd58bb9ad536cb38eacc8a8e10c73475d23b60fa11"
+    },
+    {
+      "name": "position-sizer",
+      "manifest": ".claude/skills/position-sizer/SKILL.md",
+      "manifest_sha256": "0d99d088743630f333696eda79c36331172e3efcb4a02cb7e3ffaec5aa9166e0"
+    },
+    {
+      "name": "postgres-pro",
+      "manifest": ".claude/skills/postgres-pro/SKILL.md",
+      "manifest_sha256": "45fccb9fe482ebf446a3a99457f9578c068f5f4af7c14f127f15897e39ed6964"
+    },
+    {
+      "name": "python-pro",
+      "manifest": ".claude/skills/python-pro/SKILL.md",
+      "manifest_sha256": "b6183e3b4289c51b9b7f5e619fa2da492e587652bf659f5ec7c86252c685d662"
+    },
+    {
+      "name": "quick-stats",
+      "manifest": ".claude/skills/quick-stats/SKILL.md",
+      "manifest_sha256": "6d13f6b53bed5bfe8df3d36158ed2d5b6aa594415310b6572cd373ed278fb2f2"
+    },
+    {
+      "name": "react-expert",
+      "manifest": ".claude/skills/react-expert/SKILL.md",
+      "manifest_sha256": "a4e782fc5812f63fb585ebb89254e3ea9704e9fd53b5a89d13599af6725f6fe2"
+    },
+    {
+      "name": "rust-engineer",
+      "manifest": ".claude/skills/rust-engineer/SKILL.md",
+      "manifest_sha256": "261cb535487d45b98d7015348694278799871f1fe524a7df4b643ad1547b1860"
+    },
+    {
+      "name": "secure-code-guardian",
+      "manifest": ".claude/skills/secure-code-guardian/SKILL.md",
+      "manifest_sha256": "67501125943fa1b88b1630c8d410eb5254bc8a9ee9c305be9dccf84438a934e4"
+    },
+    {
+      "name": "setup",
+      "manifest": ".claude/skills/setup/SKILL.md",
+      "manifest_sha256": "44a219916c16abf2d9fcf94674363ae1c1dadfe5a8d0943e4a8f4f9712bd81bc"
+    },
+    {
+      "name": "shadcn",
+      "manifest": ".claude/skills/shadcn/SKILL.md",
+      "manifest_sha256": "93951e5e83f616a3e046491c00d770bd54c0a64164706cd1191822a233d27592"
+    },
+    {
+      "name": "signal-postmortem",
+      "manifest": ".claude/skills/signal-postmortem/SKILL.md",
+      "manifest_sha256": "719ed5ee385d6a859ad3e147d5517ef1388fc9e5eb7fff2e8ff8cd32cef82acf"
+    },
+    {
+      "name": "strategy-compare",
+      "manifest": ".claude/skills/strategy-compare/SKILL.md",
+      "manifest_sha256": "a86d83b225d80d1ea24d9a39b25a9eb23cf10b656c6f891c2f13799ca05acdde"
+    },
+    {
+      "name": "systematic-debugging",
+      "manifest": ".claude/skills/systematic-debugging/SKILL.md",
+      "manifest_sha256": "808fc5717aa88ad65efff312b11c186294d3e6ee301afb584e2f86599b137787"
+    },
+    {
+      "name": "technical-analyst",
+      "manifest": ".claude/skills/technical-analyst/SKILL.md",
+      "manifest_sha256": "7d9c894bf222f8fdcedc649896fcaf719c5d66a741e0dfb422c7e6da021e1e69"
+    },
+    {
+      "name": "test-driven-development",
+      "manifest": ".claude/skills/test-driven-development/SKILL.md",
+      "manifest_sha256": "bf1b8216e523851a411e91d429a7c1c2a173e79d88957bc78e348218d50edd54"
+    },
+    {
+      "name": "trader-in-alerts",
+      "manifest": ".claude/skills/trader-in-alerts/SKILL.md",
+      "manifest_sha256": "9de62a006376e8a45fa6f88dc084c78f9bacbd0f055e8c371238244d21f57ea4"
+    },
+    {
+      "name": "trader-in-analyst",
+      "manifest": ".claude/skills/trader-in-analyst/SKILL.md",
+      "manifest_sha256": "7ff8c5adbb25a47eda950b63eee7ae5495bb6ee5302b509577710db12a72acfb"
+    },
+    {
+      "name": "trader-in-budget",
+      "manifest": ".claude/skills/trader-in-budget/SKILL.md",
+      "manifest_sha256": "086ea05f9baa1ad6f6290603f057b1c2ecc496582a416d3a1246798417f4e8da"
+    },
+    {
+      "name": "trader-in-entry",
+      "manifest": ".claude/skills/trader-in-entry/SKILL.md",
+      "manifest_sha256": "f7ec62df6b77748b132470aa9d7faa6caab49e425bd958a7257e9fb5d7837e49"
+    },
+    {
+      "name": "trader-in-exit",
+      "manifest": ".claude/skills/trader-in-exit/SKILL.md",
+      "manifest_sha256": "ce7125bcd70a1648fb7ae3c8990df5f8dd67c52399bd53dce88a59c8014d4fb5"
+    },
+    {
+      "name": "trader-in-insiders",
+      "manifest": ".claude/skills/trader-in-insiders/SKILL.md",
+      "manifest_sha256": "ab740c3f1f095868d03df98dd3f13cffefe53fee0a07bd772b906e010cb3d370"
+    },
+    {
+      "name": "trader-in-news",
+      "manifest": ".claude/skills/trader-in-news/SKILL.md",
+      "manifest_sha256": "45a0d8b7fcbb5b9f556ca1a0e9c3daf635e737c0e45bb87cb081e8210d5fa1f2"
+    },
+    {
+      "name": "trader-in-risk",
+      "manifest": ".claude/skills/trader-in-risk/SKILL.md",
+      "manifest_sha256": "05795c91a0888ea76fed3dfa39d524f39e80a8a75a9671f2cb61a63dfc7dfb49"
+    },
+    {
+      "name": "trader-in-scanner",
+      "manifest": ".claude/skills/trader-in-scanner/SKILL.md",
+      "manifest_sha256": "7101d7ff0794830c29e1e0d593575a985ef0b8e5ad4b7cf7191796f42390aae8"
+    },
+    {
+      "name": "trader-in-timemachine",
+      "manifest": ".claude/skills/trader-in-timemachine/SKILL.md",
+      "manifest_sha256": "f7219f9c41361e9cd92f5a22c987f0b0e390d41efb7fada7b8eda4c5ab2ae1a8"
+    },
+    {
+      "name": "trader-memory-core",
+      "manifest": ".claude/skills/trader-memory-core/SKILL.md",
+      "manifest_sha256": "0708e12b2134f18e6ceeedc2e3520a2929b3144e0d64fe118ac64f9c23dad1f5"
+    },
+    {
+      "name": "typescript-pro",
+      "manifest": ".claude/skills/typescript-pro/SKILL.md",
+      "manifest_sha256": "f09540f250a7a99f030f8e792f0f301b0923b69c7aae689e2b27c8a69e3c2c5a"
+    },
+    {
+      "name": "vectorbt-expert",
+      "manifest": ".claude/skills/vectorbt-expert/SKILL.md",
+      "manifest_sha256": "5a5a090d46dfbfc6d2419b5ca5cda12ec962c8335b22c969db9f7908ba07c19d"
+    },
+    {
+      "name": "verification-before-completion",
+      "manifest": ".claude/skills/verification-before-completion/SKILL.md",
+      "manifest_sha256": "2befe7fc55bcadaa3d97dd9e8efeb633d2561c0ebe74c5a8b17c4d9e7e4520b3"
+    },
+    {
+      "name": "websocket-engineer",
+      "manifest": ".claude/skills/websocket-engineer/SKILL.md",
+      "manifest_sha256": "aae2f9be570739f62aa364de21ff94e6e3fffff064376551ed9f209b980e7f4e"
+    },
+    {
+      "name": "writing-plans",
+      "manifest": ".claude/skills/writing-plans/SKILL.md",
+      "manifest_sha256": "48508f44bbfd7d24b029fbf3a314f3cd14c9615599059366e922f47b8dc08cf2"
+    }
+  ],
+  "review_scope": "Manifests, selected guidance, installed executable helpers and local references reviewed; not a full audit of all existing scripts or future runtime packages."
+}

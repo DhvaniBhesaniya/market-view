@@ -1,0 +1,9 @@
+# Enabled strategies and their parameters. A parameter change = a new version (bump in code).
+# Strategy cards: docs/strategies/
+
+enabled:
+  - trend_v1
+  - breakout_v1
+  - meanrev_v1
+
+params: {}   # optional overrides, e.g. {trend_v1: {rsi_max: 70}} — prefer creating a new version instead

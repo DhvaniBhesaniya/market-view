@@ -24,6 +24,12 @@ Section 01 compares the three and adds what they missed or got wrong.
 | 08 | [Market Analysis & Data](08-market-analysis-data.md) | Every factor that moves the Indian market, and where to get the data |
 | 09 | [Groww, Compliance & Costs](09-broker-groww-compliance-costs.md) | Groww API, SEBI algo rules, static IP, all monthly costs |
 | 10 | [Tech Stack & Setup](10-tech-stack-and-setup.md) | Install steps for this Windows machine, repo layout, first commands |
+| 11 | [Free Data Sources](11-free-data-sources.md) | Where to get Indian market data, charts and a live feed for ₹0 during research and paper trading |
+| 12 | [Paper Trading Runbook](12-paper-trading-runbook.md) | **How to run the software:** setup, Upstox token, backtests, daily paper loop, kill switch, weekly review |
+| 13 | [Codex Skills](13-codex-skills.md) | Installed project skills, existing reference library, adaptations, and provenance |
+| 14 | [Strategy Research](14-strategy-research.md) | Cash vs F&O, swing vs intraday, pre-open selection, candidate rules, data needs, costs, and validation |
+| 15 | [Web UI](15-web-ui.md) | **The app:** how to run `mv ui`, what each page does, the no-code strategy builder, how to check everything |
+| — | [Strategy cards](strategies/) | Rules, thesis and results history for each strategy version |
 
 ## One-paragraph summary
 

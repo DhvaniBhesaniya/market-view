@@ -1,0 +1,24 @@
+# Risk limits — see docs/05-risk-management.md
+# These are learning defaults, not financial advice. Change only with a journal note explaining why.
+
+risk_per_trade_pct: 0.25        # % of equity risked per trade (max allowed 0.5)
+max_risk_per_trade_pct: 0.5     # hard ceiling; config above this is rejected at load
+max_open_positions: 5
+max_portfolio_heat_pct: 1.5     # sum of open risk (entry-stop)*qty as % of equity
+max_positions_per_sector: 2
+max_position_value_pct: 20.0    # single position value cap, % of equity (resize down)
+min_cash_buffer_pct: 5.0        # keep this % of equity uninvested
+
+daily_loss_cap_pct: 1.0         # halt new entries for the day
+weekly_loss_cap_pct: 2.5        # halt new entries for the week
+strategy_drawdown_breaker_pct: 10.0   # disable a strategy (back to research)
+portfolio_drawdown_breaker_pct: 12.0  # kill switch
+max_consecutive_losses: 6       # pause the strategy for review
+
+min_price: 50.0                 # skip very low-priced stocks
+min_avg_turnover_cr: 50.0       # 20-day average daily turnover, in crore rupees
+max_pct_of_adv: 1.0             # position qty <= this % of 20-day average volume
+min_edge_to_cost_ratio: 4.0     # expected move to target must be >= 4x round-trip costs
+
+max_orders_per_second: 5        # SEBI threshold is 10; we stay well below
+blocked_symbols: []             # e.g. ASM/GSM names, manual exclusions
