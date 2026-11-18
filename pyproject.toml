@@ -19,6 +19,7 @@ dependencies = [
     "plotly>=5.22",
     "fastapi>=0.120",
     "uvicorn>=0.38",
+    "python-dateutil>=4.0.0",
 ]
 
 [project.scripts]

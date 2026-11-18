@@ -8,8 +8,10 @@ os.environ["MARKET_VIEW_DATA"] = str(_TMP)
 os.environ["MARKET_VIEW_CUSTOM_STRATEGIES"] = str(_TMP / "custom_strategies")
 os.environ["MARKET_VIEW_REPORTS"] = str(_TMP / "reports")
 os.environ["LIVE_TRADING"] = "false"
-os.environ.pop("UPSTOX_ACCESS_TOKEN", None)
-os.environ.pop("TELEGRAM_BOT_TOKEN", None)
+# Set to "" (not popped): load_dotenv() never overrides an existing key, so the real .env stays out of tests.
+for _secret in ("UPSTOX_ACCESS_TOKEN", "UPSTOX_API_KEY", "UPSTOX_API_SECRET", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID",
+                "GROWW_API_KEY", "GROWW_API_SECRET", "GROWW_TOTP_SECRET", "ANTHROPIC_API_KEY"):
+    os.environ[_secret] = ""
 
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
@@ -41,3 +43,11 @@ def random_walk(n: int = 600, seed: int = 1, start_price: float = 1000.0, start:
 @pytest.fixture
 def tmp_dir(tmp_path: Path) -> Path:
     return tmp_path
+
+
+@pytest.fixture(autouse=True)
+def _pin_data_source(monkeypatch):
+    """Tests are written against yfinance-keyed fixtures; don't depend on config/backtest.yaml's live choice."""
+    from market_view.config import get_settings
+
+    monkeypatch.setattr(get_settings().backtest, "data_source", "yfinance")

@@ -33,7 +33,16 @@ build/
 # --- Node / frontend ---
 node_modules/
 frontend/dist/
+frontend/dist-ssr/
 output/playwright/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.local
+frontend/.vscode/*
+!frontend/.vscode/extensions.json
 
 # --- OS / editor ---
 .DS_Store

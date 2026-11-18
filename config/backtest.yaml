@@ -1,7 +1,7 @@
 # Backtest & validation settings — see docs/06-strategies-and-validation.md
 
 initial_capital: 500000          # simulated Rs 5 lakh
-data_source: yfinance            # yfinance | upstox
+data_source: upstox              # yfinance | upstox  (switched 2026-11-18 when the Upstox token was added)
 interval: 1d
 benchmark: NIFTY50
 volatility_index: INDIAVIX
