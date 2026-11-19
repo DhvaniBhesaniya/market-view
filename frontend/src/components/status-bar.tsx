@@ -21,7 +21,7 @@ export function StatusBar() {
       <SidebarTrigger />
       <Separator orientation="vertical" className="mr-1 data-[orientation=vertical]:h-5" />
       {isError ? (
-        <Badge variant="destructive">Application offline: open Start Market View.vbs</Badge>
+        <Badge variant="destructive">Application offline: run uv run market-view start</Badge>
       ) : (
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <Badge variant="secondary" data-testid="mode-badge">Paper mode</Badge>

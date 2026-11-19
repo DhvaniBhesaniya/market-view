@@ -4,7 +4,7 @@ A local web application for NSE strategy research, backtesting and simulated tra
 
 **No strategy has passed Gate 3.** A paper trial gathers operational and research evidence; it does not establish a profitable strategy. See [the validation gates](docs/04-roadmap.md).
 
-Double-click **Start Market View.vbs**. Use **Data** to check Upstox and download history, then **Paper trading → Start research paper trial**. There is no trading CLI. Keep the application and computer running for scheduled monitoring and simulated stops.
+Start it with `uv run market-view start` (it runs in that terminal; **Ctrl+C** or `uv run market-view stop` stops it, `uv run market-view status` checks it). Use **Data** to check Upstox and download history, then **Paper trading → Start research paper trial**. There is no trading CLI. Keep the application and computer running for scheduled monitoring and simulated stops.
 
 The Paper page includes entry pause/resume, kill switch, saved stock-demand observations and a weekly mentor with actual closed-trade metrics, process reviews and three tracked priorities. Displayed demand is not a prediction or a verified opening-auction signal.
 

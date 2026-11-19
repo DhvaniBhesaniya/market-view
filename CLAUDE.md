@@ -15,7 +15,7 @@ Full plan lives in [docs/](docs/README.md). Read [docs/04-roadmap.md](docs/04-ro
 > reuse. Numeric checks never grant promotion authority. The first actual data audit was blocked
 > with 52 recorded findings; no strategy or risk configuration changed. See [guide 18](docs/18-independent-research.md).
 
-> **2026-11-19: web-operated paper research, not a validated trading system.** Double-click `Start Market View.vbs`; the trading CLI has been removed. The web app has explicit paper-trial enable/pause, a single scheduled worker, heartbeat/errors, demand observations, and an evidence-based weekly mentor with tracked priorities. The owner's trial is not automatically started by installation. See [the current operating guide](docs/17-web-paper-automation.md). **No strategy has passed Gate 3** (baseline rechecked on Upstox data 2026-11-18). Backtests use `data_source: upstox`; read-only Analytics access was verified on 2026-11-19. Known data issues remain: ADANIENT's 2015 demerger, BAJFINANCE's early tick-rounded prices, and no dividend adjustment. Current strategies are daily cash-equity swing strategies; intraday, verified opening-auction signals and F&O remain separate research work. Preserve validation gates and improve one frozen hypothesis at a time.
+> **2026-11-19: web-operated paper research, not a validated trading system.** Start with `uv run market-view start` (stop: Ctrl+C or `uv run market-view stop`); the trading CLI has been removed. The web app has explicit paper-trial enable/pause, a single scheduled worker, heartbeat/errors, demand observations, and an evidence-based weekly mentor with tracked priorities. The owner's trial is not automatically started by installation. See [the current operating guide](docs/17-web-paper-automation.md). **No strategy has passed Gate 3** (baseline rechecked on Upstox data 2026-11-18). Backtests use `data_source: upstox`; read-only Analytics access was verified on 2026-11-19. Known data issues remain: ADANIENT's 2015 demerger, BAJFINANCE's early tick-rounded prices, and no dividend adjustment. Current strategies are daily cash-equity swing strategies; intraday, verified opening-auction signals and F&O remain separate research work. Preserve validation gates and improve one frozen hypothesis at a time.
 
 ---
 
@@ -83,7 +83,7 @@ market-view/
 │   ├── execution/           # order FSM, idempotency, rate limit, kill-switch gate
 │   ├── paper/trader.py      # eod / open / monitor jobs + scheduler
 │   ├── api/                 # FastAPI for the web UI (app.py, jobs.py); NO order endpoints
-│   └── server.py            # desktop launcher -> local FastAPI application
+│   └── server.py            # `market-view start|stop|status` -> local FastAPI application
 ├── frontend/                # React + TS + Vite + shadcn/ui + Lightweight Charts (npm run build -> dist/)
 ├── tests/                   # pytest (147) + tests/e2e/ui_e2e.py (real-browser check)
 ├── data/                    # gitignored: candles, paper account, journal, kill switch, experiments
@@ -144,7 +144,7 @@ Notes on third-party skills:
 
 ## Commands
 
-User operation: double-click `Start Market View.vbs`, then use the web controls.
+User operation: `uv run market-view start` (runs in the terminal; Ctrl+C stops it), `uv run market-view status`, `uv run market-view stop`; then use the web controls.
 Current guide: [docs/17-web-paper-automation.md](docs/17-web-paper-automation.md).
 These commands are developer verification, not a trading interface:
 

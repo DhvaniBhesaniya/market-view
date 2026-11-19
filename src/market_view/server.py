@@ -3,7 +3,7 @@
 Terminal use (recommended):
     uv run market-view start     # runs in this terminal; Ctrl+C or closing the terminal stops it
     uv run market-view status    # is it running? which process?
-    uv run market-view stop      # stop a running instance (e.g. one started by the .vbs launcher)
+    uv run market-view stop      # stop a running instance (e.g. from another terminal)
 
 Stopping the app also stops the paper worker (scheduled jobs and stop/target monitoring).
 """
@@ -80,7 +80,7 @@ def start(open_browser: bool = True) -> int:
         raise RuntimeError("The frontend build is missing: cd frontend; npm install; npm run build")
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     handlers: list[logging.Handler] = [logging.FileHandler(DATA_DIR / "application.log", encoding="utf-8")]
-    console = sys.stdout is not None  # pythonw (the .vbs launcher) has no console
+    console = sys.stdout is not None  # pythonw has no console
     if console:
         handlers.append(logging.StreamHandler())
         print(f"Market View starting at {URL}  (Ctrl+C to stop; this also stops paper monitoring)")
@@ -133,7 +133,7 @@ def cli(argv: list[str] | None = None) -> int:
 
 
 def main() -> None:
-    """Entry for `python -m market_view.server` (used by the .vbs launcher)."""
+    """Entry for `python -m market_view.server`."""
     try:
         sys.exit(cli())
     except Exception as exc:

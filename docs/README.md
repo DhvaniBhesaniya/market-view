@@ -30,7 +30,7 @@ Section 01 compares the three and adds what they missed or got wrong.
 | 14 | [Strategy Research](14-strategy-research.md) | Cash vs F&O, swing vs intraday, pre-open selection, candidate rules, data needs, costs, and validation |
 | 15 | [Web UI](15-web-ui.md) | Original web UI design and research workflows; startup is superseded by guide 17 |
 | 16 | [Chart Review & Next Work](16-chart-review-and-next-work.md) | Chart sources, accuracy limitations, interval/time changes, and remaining priorities |
-| 17 | [Web Paper Automation](17-web-paper-automation.md) | **Current operating guide:** double-click launch, scheduled paper research, demand observations, weekly mentor, and remaining work |
+| 17 | [Web Paper Automation](17-web-paper-automation.md) | **Current operating guide:** start/stop commands, scheduled paper research, demand observations, weekly mentor, and remaining work |
 | 18 | [Independent Research](18-independent-research.md) | AI-free research cycles, frozen trials, optional weekly scheduling, NSE pre-open facts and actual data blockers |
 | — | [Strategy cards](strategies/) | Rules, thesis and results history for each strategy version |
 

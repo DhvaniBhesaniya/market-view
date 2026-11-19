@@ -27,7 +27,7 @@ export function QueryError({ error, what }: { error: unknown; what: string }) {
     <Alert variant="destructive">
       <AlertTitle>Could not load {what}</AlertTitle>
       <AlertDescription>
-        {offline ? "The local application is not responding. Open Start Market View.vbs in the project folder and refresh." : msg}
+        {offline ? "The local application is not responding. Run uv run market-view start in the project folder and refresh." : msg}
       </AlertDescription>
     </Alert>
   )

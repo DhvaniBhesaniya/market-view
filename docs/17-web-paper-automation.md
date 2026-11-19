@@ -22,8 +22,9 @@ promotion to a proven strategy. Do not fund live trading on this basis.
 
 ## Open and operate
 
-1. Double-click `Start Market View.vbs`. It starts the local Python application without a terminal
-   and opens `http://127.0.0.1:8000`. Reopening it opens the existing instance. Initial developer
+1. Run `uv run market-view start` from the project folder. The application runs inside that terminal
+   and opens `http://127.0.0.1:8000`; **Ctrl+C**, closing the terminal, or `uv run market-view stop`
+   stops it (`uv run market-view status` checks it). Starting again while it runs opens the existing instance. Initial developer
    setup still needs the Python environment and frontend production build described in README.
 2. On **Data**, click **Check Upstox connection**. The configured Analytics token is read-only;
    it suffices for real-data paper simulations. The application never sends Upstox orders.
@@ -39,8 +40,8 @@ promotion to a proven strategy. Do not fund live trading on this basis.
    not the earlier 09:15 opening print.
 6. **Pause new entries** keeps monitoring and exits running for the existing account. The separate
    kill switch vetoes entries until reset with a written explanation. It does not flatten positions.
-7. Keep the computer awake and application running. Closing the browser alone is fine. The desktop
-   launcher is not a Windows service or an auto-start-at-boot installer. Simulated protective stops
+7. Keep the computer awake and application running. Closing the browser alone is fine; closing the terminal stops it. The
+   app is not a Windows service or an auto-start-at-boot installer. Simulated protective stops
    are local records; they cannot act while the application is stopped or prices are unavailable.
    Gaps can exceed a planned stop. The page shows heartbeat, worker state and errors.
 

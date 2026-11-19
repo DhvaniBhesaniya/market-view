@@ -1,4 +1,4 @@
-"""market-view local web API (FastAPI). Open with Start Market View.vbs.
+"""market-view local web API (FastAPI). Start with `uv run market-view start`.
 
 SAFETY (CLAUDE.md rules 1-3):
   * There is NO individual order endpoint. The UI explicitly enables/pauses research paper scheduling;

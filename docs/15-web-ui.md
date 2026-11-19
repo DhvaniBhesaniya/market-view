@@ -11,10 +11,10 @@ Descriptions of the original read-only Paper page below are historical; guide 17
 cd C:\dhvani-cs\personal\market-view
 uv sync                                   # Python deps (FastAPI, uvicorn included)
 cd frontend; npm install; npm run build; cd ..   # build the UI once (and after UI changes)
-# Then double-click Start Market View.vbs (localhost:8000 only).
+uv run market-view start                  # localhost:8000 only; Ctrl+C or `uv run market-view stop` stops it
 ```
 
-UI development (hot reload): run `uv run mv ui --no-open` in one terminal and `cd frontend; npm run dev` in
+UI development (hot reload): run `uv run market-view start --no-browser` in one terminal and `cd frontend; npm run dev` in
 another, then open http://127.0.0.1:5173 (Vite forwards `/api` to port 8000).
 
 ## Pages
