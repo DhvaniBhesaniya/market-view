@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 import math
-import time
+from collections.abc import Callable
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -70,7 +70,25 @@ class PaperTrader:
 
     # ------------------------------------------------------------------ plumbing
     def _save(self) -> None:
-        self.state_path.write_text(json.dumps(self.st, indent=2, default=str), encoding="utf-8")
+        pending = self.state_path.with_suffix(".tmp")
+        pending.write_text(json.dumps(self.st, indent=2, default=str), encoding="utf-8")
+        pending.replace(self.state_path)
+
+    def _fresh_quotes(self, quotes: dict[str, Quote], symbols: list[str], now: datetime) -> tuple[dict[str, Quote], list[str]]:
+        fresh, issues = {}, []
+        for sym in symbols:
+            q = quotes.get(sym)
+            if q is None:
+                issues.append(f"no quote for {sym}")
+                continue
+            age = (now - q.time).total_seconds() if q.time.tzinfo else float("inf")
+            if not math.isfinite(q.ltp) or q.ltp <= 0 or not -5 <= age <= self.cfg.stale_data_seconds:
+                issues.append(f"stale/invalid quote for {sym}: {age:.0f}s old")
+                continue
+            fresh[sym] = q
+        if issues:
+            self.killswitch.trigger("; ".join(issues), "quote validation")
+        return fresh, issues
 
     def history_source(self) -> DataSource:
         if self._history_source is None:
@@ -92,7 +110,8 @@ class PaperTrader:
         return self.broker.funds().cash + value
 
     def _roll_period(self, today: date, quotes: dict[str, Quote] | None = None) -> None:
-        eq = self.equity(quotes)
+        # Reset against the last saved mark, before incorporating today's opening gap.
+        eq = self.equity()
         if self.st["day"]["date"] != today.isoformat():
             self.st["day"] = {"date": today.isoformat(), "equity": eq}
         iso = today.isocalendar()
@@ -269,7 +288,8 @@ class PaperTrader:
         notify(f"EOD {today}: equity Rs {eq:,.0f}, {len(self.positions)} open, {len(summary['new_signals'])} signals for tomorrow")
         return summary
 
-    def open_job(self, now: datetime | None = None, quotes: dict[str, Quote] | None = None) -> dict:
+    def open_job(self, now: datetime | None = None, quotes: dict[str, Quote] | None = None,
+                 entry_permission: Callable[[], bool] | None = None) -> dict:
         now = now or cal.now_ist()
         summary: dict = {"time": now.isoformat(), "exits": [], "entries": [], "skipped": []}
         # quotes outside the session are stale (yesterday's close / a weekend): never trade on them
@@ -279,10 +299,17 @@ class PaperTrader:
         if not cal.is_market_open(now):
             summary["skipped"].append(f"market closed at {now:%H:%M} IST: pending signals kept")
             return summary
+        if self.st["last_open"] == now.date().isoformat():
+            summary["skipped"].append("open job already completed today")
+            return summary
+        self.reconcile()  # unresolved positions or missing protection veto every new entry
         exit_syms = [s for s, p in self.positions.items() if p.get("exit_next_open")]
         entry_syms = [d["symbol"] for d in self.st["pending_entries"]]
+        quote_syms = sorted(set(self.positions) | set(entry_syms))
         if quotes is None:
-            quotes = self.live_source().quotes(sorted(set(exit_syms + entry_syms))) if (exit_syms or entry_syms) else {}
+            quotes = self.live_source().quotes(quote_syms) if quote_syms else {}
+        quotes, issues = self._fresh_quotes(quotes, quote_syms, now)
+        summary["skipped"].extend(issues)
         self.broker.set_quotes(quotes)
         self._roll_period(now.date(), quotes)
 
@@ -291,10 +318,24 @@ class PaperTrader:
                 summary["skipped"].append(f"exit {sym}: no quote")
                 continue
             self._exit_market(sym, self.positions[sym]["exit_next_open"], now)
-            summary["exits"].append(sym)
+            if sym not in self.positions:
+                summary["exits"].append(sym)
+            else:
+                summary["skipped"].append(f"exit {sym}: did not complete; inspect protection and journal")
 
         for d in sorted(self.st["pending_entries"], key=lambda x: -x["confidence"]):
             sig = Signal(**d)
+            if entry_permission is not None and not entry_permission():
+                self.journal.signal(sig, "open_final", False, decision="paused", reasons=["paper entries paused in the application"])
+                summary["skipped"].append(f"{sig.symbol}: entries paused")
+                continue
+            next_day = sig.bar_time.astimezone(IST).date() + timedelta(days=1)
+            while not cal.is_trading_day(next_day):
+                next_day += timedelta(days=1)
+            if next_day != now.date():
+                self.journal.signal(sig, "open_final", False, decision="expired", reasons=["signal is only valid for the next trading session"])
+                summary["skipped"].append(f"{sig.symbol}: expired signal")
+                continue
             q = quotes.get(sig.symbol)
             if q is None:
                 self.journal.signal(sig, "open_final", False, decision="no quote", reasons=["no quote at open"])
@@ -321,15 +362,27 @@ class PaperTrader:
             if order.status != OrderStatus.COMPLETE or not fill:
                 summary["skipped"].append(f"{sig.symbol}: order {order.status}")
                 continue
-            pid = self.broker.place_protective(sig.symbol, fill["qty"], sig.stop, sig.target)
             self.positions[sig.symbol] = {
                 "strategy_id": sig.strategy_id, "qty": fill["qty"], "initial_qty": fill["qty"],
                 "entry_price": fill["price"], "entry_time": now.isoformat(), "initial_stop": sig.stop, "stop": sig.stop,
                 "target": sig.target, "highest_high": fill["price"], "lowest_low": fill["price"], "bars_held": 0,
                 "scaled_out": False, "exit_qty": 0, "exit_value": 0.0, "charges": fill["charges"],
-                "exit_next_open": None, "protective_id": pid, "last_price": fill["price"],
+                "exit_next_open": None, "protective_id": None, "last_price": fill["price"],
                 "last_bar_date": None, "signal": d,
             }
+            self._save()  # protection failures must leave a recoverable position record
+            try:
+                pid = self.broker.place_protective(sig.symbol, fill["qty"], sig.stop, sig.target)
+                self.positions[sig.symbol]["protective_id"] = pid
+            except Exception:
+                self.killswitch.trigger(f"Protective stop failed for {sig.symbol}", "entry protection")
+                self.journal.event("ERROR", f"Protective stop failed for {sig.symbol}; emergency paper exit requested")
+                try:
+                    self._exit_market(sig.symbol, "protective placement failure", now)
+                finally:
+                    self._save()
+                summary["skipped"].append(f"{sig.symbol}: protective placement failed; emergency exit requested")
+                continue
             summary["entries"].append(f"{sig.symbol} {fill['qty']} @ {fill['price']:.2f} stop {sig.stop:.2f}")
             notify(f"ENTRY {sig.strategy_id} {sig.symbol} {fill['qty']} @ {fill['price']:.2f}, broker-side stop {sig.stop:.2f}")
         self.st["pending_entries"] = []
@@ -346,19 +399,9 @@ class PaperTrader:
             return summary
         if quotes is None:
             quotes = self.live_source().quotes(sorted(self.positions))
+        quotes, issues = self._fresh_quotes(quotes, sorted(self.positions), now)
+        summary["alerts"].extend(issues)
         self._roll_period(now.date(), quotes)
-
-        # stale data -> kill switch (no reliable prices = no new risk)
-        if cal.is_market_open(now):
-            for sym, q in quotes.items():
-                age = (now - q.time).total_seconds()
-                if age > self.cfg.stale_data_seconds:
-                    reason = f"stale quote for {sym}: {age:.0f}s old"
-                    self.killswitch.trigger(reason, "monitor")
-                    summary["alerts"].append(reason)
-            missing = set(self.positions) - set(quotes)
-            if missing:
-                summary["alerts"].append(f"no quotes for {sorted(missing)}")
 
         # broker-side protective orders
         for pid, kind, fill in self.broker.on_quotes(quotes):
@@ -395,6 +438,11 @@ class PaperTrader:
                 summary["scale_outs"].append(f"{sym}: sold {qty}, stop -> breakeven {pos['stop']:.2f}")
 
         state = self._state(quotes)
+        self.st["peak_equity"] = max(self.st["peak_equity"], state.equity)
+        breaker = self.risk.portfolio_breaker(state)
+        if breaker and "drawdown" in breaker:
+            self.killswitch.trigger(breaker, "portfolio breaker")
+            summary["alerts"].append(breaker)
         if state.day_pnl_pct <= -self.settings.risk.daily_loss_cap_pct:
             reason = f"daily loss {state.day_pnl_pct:.2f}% hit cap {self.settings.risk.daily_loss_cap_pct}%"
             self.killswitch.trigger(reason, "daily loss cap")
@@ -435,29 +483,3 @@ class PaperTrader:
             "killswitch": self.killswitch.status().get("active"),
             "last_eod": self.st["last_eod"], "last_open": self.st["last_open"], "last_monitor": self.st["last_monitor"],
         }
-
-    # ------------------------------------------------------------------ scheduler
-    def run_forever(self, poll_seconds: int = 30) -> None:
-        """Simple scheduler. Leave it running in a terminal (or a VPS service) during market days."""
-        sched = self.cfg.schedule
-        open_t, eod_t = cal.parse_hhmm(sched.open_job), cal.parse_hhmm(sched.eod_job)
-        notify("paper trader scheduler started")
-        while True:
-            now = cal.now_ist()
-            today = now.date().isoformat()
-            try:
-                if cal.is_trading_day(now.date()):
-                    if now.time() >= open_t and self.st["last_open"] != today and now.time() < eod_t:
-                        self.open_job(now)
-                        self.reconcile()
-                    last = self.st.get("last_monitor")
-                    due = last is None or (now - datetime.fromisoformat(last)) >= timedelta(minutes=sched.monitor_every_minutes)
-                    if cal.is_market_open(now) and due:
-                        self.monitor(now)
-                    if now.time() >= eod_t and self.st["last_eod"] != today:
-                        self.eod(now.date())
-                        self.reconcile()
-            except Exception as e:  # never die silently; alert and keep the stops resting at the broker
-                notify(f"scheduler error: {e}", "ERROR")
-                self.journal.event("ERROR", f"scheduler: {e}")
-            time.sleep(poll_seconds)

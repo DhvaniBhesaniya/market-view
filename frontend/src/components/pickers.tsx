@@ -36,7 +36,7 @@ export function SymbolPicker({ value, onChange, className }: { value: string; on
         <Command>
           <CommandInput placeholder="Search symbol or sector…" />
           <CommandList>
-            <CommandEmpty>No stored data for that symbol. Download it with `uv run mv data download`.</CommandEmpty>
+            <CommandEmpty>No stored data for that symbol. Download history from the Data page.</CommandEmpty>
             {groups.map(([label, rows]) =>
               rows.length ? (
                 <CommandGroup key={label} heading={label}>
@@ -127,7 +127,7 @@ export function PeriodToggle({ value, onChange }: { value: string; onChange: (p:
           </span>
         </TooltipTrigger>
         <TooltipContent className="max-w-xs">
-          2023-2025 is locked. It runs once per strategy version from the CLI, only after Gate 3 passes, so it stays a
+          2023-2025 is locked. It can be assessed once per frozen strategy version after Gate 3 passes, so it stays a
           fair final exam.
         </TooltipContent>
       </Tooltip>

@@ -1,7 +1,9 @@
 # 15 — Web UI (how to run it, what each page is for, how to check it)
 
-A local web app over the same Python engine the CLI uses. It **cannot place orders** of any kind:
-there is no order endpoint in the API (a test asserts the full list of state-changing endpoints).
+A local web app over the Python research and paper engine. There is no individual order endpoint.
+Since 2026-11-19 the Paper page can explicitly enable/pause simulated scheduling; live orders stay locked.
+See [the current operating guide](17-web-paper-automation.md) for the launcher and paper automation.
+Descriptions of the original read-only Paper page below are historical; guide 17 supersedes them.
 
 ## Run it
 
@@ -9,7 +11,7 @@ there is no order endpoint in the API (a test asserts the full list of state-cha
 cd C:\dhvani-cs\personal\market-view
 uv sync                                   # Python deps (FastAPI, uvicorn included)
 cd frontend; npm install; npm run build; cd ..   # build the UI once (and after UI changes)
-uv run mv ui                              # opens http://127.0.0.1:8000 (localhost only)
+# Then double-click Start Market View.vbs (localhost:8000 only).
 ```
 
 UI development (hot reload): run `uv run mv ui --no-open` in one terminal and `cd frontend; npm run dev` in

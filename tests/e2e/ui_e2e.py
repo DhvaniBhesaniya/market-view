@@ -3,7 +3,7 @@
     uv run python tests/e2e/ui_e2e.py            # needs: frontend built (npm run build) + data downloaded
     uv run python tests/e2e/ui_e2e.py --headed   # watch it
 
-It copies data/clean, the experiment log and backtest reports into a temp folder, starts `mv ui` on port
+It copies data/clean, the experiment log and backtest reports into a temp folder, starts the API on port
 8765 pointed at that copy, then drives every page and the main flows. Your real data/, reports/ and
 config/custom_strategies/ are never touched. Fails (exit 1) on any failed check, console error, or HTTP 4xx/5xx.
 
@@ -51,8 +51,22 @@ def make_env(tmp: Path) -> dict[str, str]:
     if (ROOT / "reports" / "backtests").exists():
         shutil.copytree(ROOT / "reports" / "backtests", tmp / "reports" / "backtests")
     (tmp / "custom").mkdir()
+    # Synthetic journal in the isolated workspace only; never run the owner's paper account.
+    from datetime import datetime, timedelta
+
+    from market_view.config import IST
+    from market_view.journal import Journal
+    from market_view.models import Trade
+
+    when = datetime(2026, 11, 5, 11, 0, tzinfo=IST)
+    Journal(tmp / "data" / "journal.duckdb").trade(Trade(
+        strategy_id="e2e_synthetic_v1", symbol="TCS", entry_time=when-timedelta(days=1), exit_time=when,
+        entry_price=1000, exit_price=1011, qty=10, initial_stop=970, target=1060,
+        gross_pnl=110, charges=10, net_pnl=100, r_multiple=1/3, bars_held=1,
+        mae_pct=-1, mfe_pct=1.1, exit_reason="synthetic test exit"))
     return {**os.environ, "MARKET_VIEW_DATA": str(tmp / "data"), "MARKET_VIEW_REPORTS": str(tmp / "reports"),
-            "MARKET_VIEW_CUSTOM_STRATEGIES": str(tmp / "custom"), "PYTHONIOENCODING": "utf-8", "LIVE_TRADING": "false"}
+            "MARKET_VIEW_CUSTOM_STRATEGIES": str(tmp / "custom"), "PYTHONIOENCODING": "utf-8", "LIVE_TRADING": "false",
+            "UPSTOX_ACCESS_TOKEN": "", "TELEGRAM_BOT_TOKEN": "", "TELEGRAM_CHAT_ID": ""}
 
 
 def wait_server(proc: subprocess.Popen) -> None:
@@ -94,7 +108,7 @@ def run(headed: bool, custom_dir: Path, shots: Path, chart_only: bool = False) -
             runs = json.loads(r.read())
         first_run = runs[0]["run_id"] if runs else None
         routes = ["/", "/chart", "/strategies", "/strategies/trend_v1", "/builder", "/backtests",
-                  "/validation?strategy=trend_v1", "/paper", "/data", "/nope"]
+                  "/validation?strategy=trend_v1", "/research", "/paper", "/data", "/nope"]
         if first_run:
             routes.append(f"/backtests/{first_run}")
         if chart_only:
@@ -144,6 +158,10 @@ def run(headed: bool, custom_dir: Path, shots: Path, chart_only: bool = False) -
 
         def chart_intervals():
             page.goto(BASE + "/chart?symbol=RELIANCE&interval=5m")
+            page.wait_for_load_state("networkidle")
+            # Synthetic minute candles belong to Yahoo; the user's default is now Upstox.
+            page.get_by_role("combobox", name="Chart data source").click()
+            page.get_by_role("option", name="Yahoo Finance", exact=True).click()
             page.wait_for_load_state("networkidle")
             chart_box = page.get_by_test_id("price-chart")
             expect(chart_box).to_be_visible()
@@ -257,6 +275,48 @@ def run(headed: bool, custom_dir: Path, shots: Path, chart_only: bool = False) -
             expect(page.get_by_test_id("killswitch-badge")).to_have_count(0, timeout=20000)
         check("kill switch drill (on -> off needs a written note)", killswitch)
 
+        def weekly_review():
+            page.goto(BASE + "/paper")
+            page.wait_for_load_state("networkidle")
+            expect(page.get_by_role("button", name="Start research paper trial")).to_be_disabled()
+            page.get_by_label("I understand this is a simulated research trial").check()
+            expect(page.get_by_role("button", name="Start research paper trial")).to_be_enabled()
+            # Start/pause API behavior is covered with fake providers; do not enable a real feed here.
+            page.get_by_label("Choose a day in the review week").fill("2026-11-05")
+            expect(page.locator("summary").filter(has_text="TCS")).to_be_visible()
+            page.locator("summary").filter(has_text="TCS").click()
+            for label in ["Risk management", "Followed the plan", "Trade selection", "Execution"]:
+                page.get_by_label(label, exact=True).select_option("false")
+            page.get_by_label("Evidence: compare signal, sizing, stop and fills").fill("Synthetic test: profitable trade breached all four process rules.")
+            page.get_by_role("button", name="Save process review").click()
+            expect(page.get_by_role("heading", name="Final Rating — 0/10")).to_be_visible(timeout=10000)
+            page.get_by_role("button", name="Save next week's plan").click()
+            expect(page.get_by_role("button", name="Next week's plan saved")).to_be_disabled(timeout=10000)
+            page.get_by_label("Choose a day in the review week").fill("2026-11-12")
+            expect(page.get_by_role("heading", name="Follow-through on last week's plan")).to_be_visible()
+            page.get_by_label("Follow-through evidence").first.fill("Synthetic test: reproduced and corrected the sizing breach.")
+            page.get_by_role("button", name="Mark action complete").first.click()
+            expect(page.get_by_text("Prior saved plan: 1/3 actions", exact=False)).to_be_visible(timeout=10000)
+            page.screenshot(path=str(shots / "weekly-follow-through.png"), full_page=True)
+        check("paper controls and evidence-based weekly mentor", weekly_review)
+
+        def research_lab():
+            page.goto(BASE + "/research")
+            page.wait_for_load_state("networkidle")
+            expect(page.get_by_role("heading", name="Research lab", exact=True)).to_be_visible()
+            page.get_by_role("button", name="Enable weekly research").click()
+            expect(page.get_by_role("button", name="Disable weekly research")).to_be_visible()
+            page.get_by_role("button", name="Disable weekly research").click()
+            expect(page.get_by_role("button", name="Enable weekly research")).to_be_visible()
+            page.get_by_role("button", name="Run research cycle").click()
+            expect(page.get_by_text("Research candidate only.", exact=False).first).to_be_visible(timeout=60000)
+            expect(page.get_by_text("Findings requiring attention", exact=False).first).to_be_visible()
+            expect(page.get_by_role("button", name="Run research cycle")).to_be_enabled(timeout=15000)
+            page.get_by_role("button", name="Run research cycle").click()
+            expect(page.get_by_text("identical evidence reused", exact=False)).to_be_visible(timeout=30000)
+            page.screenshot(path=str(shots / "research-data-gate.png"), full_page=True)
+        check("independent research: data gate, weekly controls, frozen-result reuse", research_lab)
+
         def montecarlo():
             page.goto(BASE + "/validation?strategy=e2e_dip_v1")
             page.wait_for_load_state("networkidle")
@@ -275,7 +335,7 @@ def run(headed: bool, custom_dir: Path, shots: Path, chart_only: bool = False) -
             page.get_by_role("button", name="Toggle theme").click()
             m = ctx.new_page()
             m.set_viewport_size({"width": 390, "height": 844})
-            for route in ["/", "/chart", "/builder", "/paper"] + ([f"/backtests/{first_run}"] if first_run else []):
+            for route in ["/", "/chart", "/builder", "/paper", "/research"] + ([f"/backtests/{first_run}"] if first_run else []):
                 m.goto(BASE + route)
                 m.wait_for_load_state("networkidle")
                 over = m.evaluate("document.documentElement.scrollWidth - window.innerWidth")

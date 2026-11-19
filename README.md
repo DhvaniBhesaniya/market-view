@@ -1,22 +1,32 @@
 # market-view
 
-A personal market view and strategy platform: AI-assisted trading **research, backtesting and paper trading** for Indian equities (NSE). Upstox provides market data; real orders (much later) will go through Groww or Upstox.
+A local web application for NSE strategy research, backtesting and simulated trading. Upstox supplies read-only market data. Live broker orders remain locked.
 
-**Status:** the Phase 1–4 engine is built (data → strategies → honest backtests → risk engine → paper trading), with 53 tests. No strategy has passed validation yet. See [docs/04-roadmap.md](docs/04-roadmap.md).
+**No strategy has passed Gate 3.** A paper trial gathers operational and research evidence; it does not establish a profitable strategy. See [the validation gates](docs/04-roadmap.md).
+
+Double-click **Start Market View.vbs**. Use **Data** to check Upstox and download history, then **Paper trading → Start research paper trial**. There is no trading CLI. Keep the application and computer running for scheduled monitoring and simulated stops.
+
+The Paper page includes entry pause/resume, kill switch, saved stock-demand observations and a weekly mentor with actual closed-trade metrics, process reviews and three tracked priorities. Displayed demand is not a prediction or a verified opening-auction signal.
+
+[Current operating guide and remaining work](docs/17-web-paper-automation.md).
+
+**Research lab** runs a bounded baseline/candidate experiment and records data vetoes, failed trials
+and validation evidence without an AI key. Optional weekly scheduling and market context are in
+[the independent research guide](docs/18-independent-research.md). It cannot promote strategies.
+
+Developer setup and verification:
 
 ```powershell
 uv sync
 uv run pytest
-uv run mv doctor
-uv run mv data download --source yfinance --start 2008-01-01
-uv run mv backtest run --strategy all --period validate
-uv run mv paper status
-uv run mv ui        # web UI (first: cd frontend; npm install; npm run build) - see docs/15-web-ui.md
+cd frontend
+npm ci
+npm run check
 ```
 
-- ▶️ How to run it: [docs/12-paper-trading-runbook.md](docs/12-paper-trading-runbook.md)
+- ▶️ How to run it: [web paper guide](docs/17-web-paper-automation.md)
 - 📘 Plan & docs: [docs/README.md](docs/README.md)
 - 🤖 Claude Code guidance: [CLAUDE.md](CLAUDE.md)
 - 🔬 Original research notes: [research/](research/)
 
-> Educational project. Not financial advice. Paper trading only. Live order code is locked behind `LIVE_TRADING=true` **and** `--live`, and isn't implemented until Phase 7.
+Paper fills are simulations. Fees, gaps, quote sampling and outages can change outcomes; none of the software promises daily profits.

@@ -1,4 +1,6 @@
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery } from "@tanstack/react-query"
+import { useState } from "react"
+import { toast } from "sonner"
 import { ChartCandlestick } from "lucide-react"
 import { Link } from "react-router"
 
@@ -10,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { api } from "@/lib/api"
+import { useJob } from "@/hooks/use-job"
 import { date, int } from "@/lib/format"
 
 const KIND_HELP: Record<string, string> = {
@@ -21,6 +24,10 @@ const KIND_HELP: Record<string, string> = {
 }
 
 export default function Data() {
+  const [jobId, setJobId] = useState<string | null>(null)
+  const job = useJob(jobId)
+  const check = useMutation({ mutationFn: api.checkConnection, onError: (e) => toast.error(e.message) })
+  const download = useMutation({ mutationFn: api.downloadDaily, onSuccess: (j) => setJobId(j.id), onError: (e) => toast.error(e.message) })
   const status = useQuery({ queryKey: ["status"], queryFn: api.status })
   const symbols = useQuery({ queryKey: ["symbols"], queryFn: api.symbols, staleTime: 60_000 })
   const quality = useQuery({ queryKey: ["quality"], queryFn: api.dataQuality, staleTime: 300_000 })
@@ -35,10 +42,17 @@ export default function Data() {
         <Alert>
           <AlertTitle>Using free yfinance data (delayed, adjusted)</AlertTitle>
           <AlertDescription>
-            When the Upstox account is ready: put the read-only Analytics token in .env as UPSTOX_ACCESS_TOKEN, run <code>uv run mv upstox check</code>, then <code>uv run mv data download --source upstox --start 2008-01-01</code>. Paper trading then uses Upstox quotes automatically.
+            Configure a read-only Upstox Analytics token as UPSTOX_ACCESS_TOKEN in the local .env file. Then use Check Upstox connection below. Data access does not authorize live trading.
           </AlertDescription>
         </Alert>
       )}
+      <Card><CardHeader><CardTitle className="font-heading">Data connection and history</CardTitle><CardDescription>Read-only Upstox access. Refresh the configured daily universe for research; raw observations are retained.</CardDescription></CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2"><Button variant="outline" disabled={check.isPending || !status.data?.upstox_token_set} onClick={() => check.mutate()}>Check Upstox connection</Button><Button variant="outline" disabled={download.isPending || (!!jobId && job.data?.status !== "done" && job.data?.status !== "error")} onClick={() => download.mutate()}>Refresh daily history</Button></div>
+          {check.data && <p className="text-sm">{check.data.ok ? "Connected" : "No benchmark quote"}. {check.data.scope}</p>}
+          {jobId && <p className="text-sm">History job: {job.data?.status ?? "queued"}{job.data?.error ? ` — ${job.data.error}` : ""}. Refresh this page after completion to reload coverage.</p>}
+        </CardContent>
+      </Card>
       <MetricGrid>
         <Metric label="Symbols with data" value={`${stored.length} / ${rows.length}`} sub={status.data?.data_source} />
         <Metric label="Latest bar" value={latest ?? "–"} sub={stale.length ? `${stale.length} symbol(s) behind` : "all up to date"} tone={stale.length ? "warn" : "flat"} />

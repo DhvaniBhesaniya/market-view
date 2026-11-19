@@ -21,7 +21,7 @@ export function StatusBar() {
       <SidebarTrigger />
       <Separator orientation="vertical" className="mr-1 data-[orientation=vertical]:h-5" />
       {isError ? (
-        <Badge variant="destructive">API offline: run `uv run mv ui`</Badge>
+        <Badge variant="destructive">Application offline: open Start Market View.vbs</Badge>
       ) : (
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <Badge variant="secondary" data-testid="mode-badge">Paper mode</Badge>
@@ -33,7 +33,7 @@ export function StatusBar() {
               </Badge>
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
-              Live orders need LIVE_TRADING=true AND a --live CLI flag, and only after the Phase 5 gate. This UI has no
+              Live trading remains locked until the project validation gates pass. This application has no
               order buttons at all.
             </TooltipContent>
           </Tooltip>

@@ -31,6 +31,7 @@ const NAV = [
     { to: "/chart", label: "Chart", icon: ChartCandlestick },
   ] },
   { group: "Research", items: [
+    { to: "/research", label: "Research lab", icon: FlaskConical },
     { to: "/strategies", label: "Strategies", icon: Layers },
     { to: "/builder", label: "Build a strategy", icon: Blocks },
     { to: "/backtests", label: "Backtests", icon: FlaskConical },

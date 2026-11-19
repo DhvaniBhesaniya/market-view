@@ -14,6 +14,7 @@ const Builder = lazy(() => import("@/pages/builder"))
 const Backtests = lazy(() => import("@/pages/backtests"))
 const BacktestDetail = lazy(() => import("@/pages/backtest-detail"))
 const Validation = lazy(() => import("@/pages/validation"))
+const Research = lazy(() => import("@/pages/research"))
 const Paper = lazy(() => import("@/pages/paper"))
 const Data = lazy(() => import("@/pages/data"))
 
@@ -41,6 +42,7 @@ export function App() {
             <Route path="/backtests" element={<Backtests />} />
             <Route path="/backtests/:runId" element={<BacktestDetail />} />
             <Route path="/validation" element={<Validation />} />
+            <Route path="/research" element={<Research />} />
             <Route path="/paper" element={<Paper />} />
             <Route path="/data" element={<Data />} />
             <Route path="*" element={<NotFound />} />

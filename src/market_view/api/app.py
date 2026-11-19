@@ -1,12 +1,11 @@
-"""market-view local web API (FastAPI). Start with `uv run mv ui`.
+"""market-view local web API (FastAPI). Open with Start Market View.vbs.
 
 SAFETY (CLAUDE.md rules 1-3):
-  * There is NO order endpoint here: not live, not paper. The UI can read research and paper state, run
-    backtests and validations, save rule strategies, and switch the kill switch ON (or OFF with a written
-    note). Orders only ever come from the paper trader's own jobs.
+  * There is NO individual order endpoint. The UI explicitly enables/pauses research paper scheduling;
+    orders only come from strategy -> risk -> execution -> simulated broker.
   * It binds to 127.0.0.1 only and rejects foreign Host headers (DNS-rebinding protection), so other
     machines and random web pages cannot drive it.
-  * The locked 2023-2025 test period cannot be run from the UI (CLI only, deliberately).
+  * The locked 2023-2025 test period cannot be run from the UI.
 """
 
 from __future__ import annotations
@@ -29,9 +28,11 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from market_view.api import serialize as ser
 from market_view.api.jobs import JobManager
 from market_view.config import DATA_DIR, IST, REPORTS_DIR, ROOT, env, get_settings
+from market_view.paper.automation import PaperAutomation
+from market_view.research.lab import ResearchLab
 
 STATIC_DIR = ROOT / "frontend" / "dist"
-UI_PERIODS = ("train", "validate", "full", "forward")  # "test" is locked: CLI only
+UI_PERIODS = ("train", "validate", "full", "forward")  # locked holdout stays unavailable
 RUN_ID_RE = re.compile(r"^[\w\-+.&]+$")
 
 jobs = JobManager()
@@ -151,7 +152,7 @@ def _load(symbol: str, source: str | None = None) -> pd.DataFrame:
 
     df = store.load(symbol, "1d", source or _source())
     if df.empty:
-        raise _bad(f"no stored data for {symbol!r} ({source or _source()}). Run: uv run mv data download", 404)
+        raise _bad(f"No stored data for {symbol!r} ({source or _source()}). Download history from the Data page.", 404)
     return df
 
 
@@ -543,7 +544,7 @@ def run_backtest(req: BacktestRequest) -> dict[str, Any]:
     from market_view.strategies import make
 
     if req.period == "test":
-        raise _bad("The 2023-2025 test period is LOCKED and can only be run from the CLI, once per strategy "
+        raise _bad("The 2023-2025 test period is LOCKED and requires the documented validation protocol, once per strategy "
                    "version, after Gate 3 (docs/04-roadmap.md).", 403)
     if req.period not in UI_PERIODS:
         raise _bad(f"period must be one of {UI_PERIODS}")
@@ -643,6 +644,35 @@ def list_validations(strategy: str | None = None, kind: str | None = None) -> li
 # ============================================================================ jobs
 
 
+@api.get("/research")
+def get_research(request: Request) -> dict[str, Any]:
+    from market_view.data import store
+    from market_view.research.lab import market_context
+
+    s = get_settings().backtest
+    context = market_context(store.load(s.benchmark, "1d", s.data_source),
+                             store.load(s.volatility_index, "1d", s.data_source))
+    lab = request.app.state.research
+    return ser.deep_clean({"status": lab.status(), "market": context, "reports": lab.history()})
+
+
+@api.post("/research/run", status_code=status.HTTP_202_ACCEPTED)
+def run_research(request: Request) -> dict[str, Any]:
+    lab = request.app.state.research
+    if lab.status()["busy"]:
+        raise _bad("A research cycle is already running.", 409)
+    return jobs.submit("research", {"protocol": lab.status()["protocol"]}, lab.run_cycle)
+
+
+class ResearchControl(BaseModel):
+    enabled: bool
+
+
+@api.post("/research/control")
+def control_research(body: ResearchControl, request: Request) -> dict[str, Any]:
+    return request.app.state.research.control(body.enabled)
+
+
 @api.get("/jobs")
 def list_jobs() -> list[dict[str, Any]]:
     return ser.deep_clean(jobs.list())
@@ -656,17 +686,127 @@ def get_job(job_id: str) -> dict[str, Any]:
     return ser.deep_clean(job)
 
 
-# ============================================================================ paper trading (read-only)
+# ============================================================================ paper research automation
 
 
 @api.get("/paper")
-def get_paper() -> dict[str, Any]:
-    if not (DATA_DIR / "paper" / "trader.json").exists():
-        return {"started": False, "how": "Run `uv run mv paper eod` after 15:35 IST (or `uv run mv paper run`)."}
-    from market_view.paper.trader import PaperTrader
+def get_paper(request: Request) -> dict[str, Any]:
+    return ser.deep_clean(request.app.state.paper.paper_status())
 
-    st = PaperTrader().status()
-    return ser.deep_clean({"started": True, **st, "initial_capital": get_settings().paper.initial_capital})
+
+@api.get("/paper/automation")
+def get_automation(request: Request) -> dict[str, Any]:
+    return ser.deep_clean(request.app.state.paper.status())
+
+
+class AutomationAction(BaseModel):
+    action: Literal["start", "pause"]
+    acknowledge_research: bool = False
+
+
+@api.post("/paper/automation")
+def control_paper(body: AutomationAction, request: Request) -> dict[str, Any]:
+    if body.action == "start":
+        if not body.acknowledge_research:
+            raise _bad("Acknowledge the unvalidated research paper trial before starting.")
+        if (env("LIVE_TRADING", "false") or "false").lower() != "false":
+            raise _bad("Disable LIVE_TRADING before using the paper research application.", 409)
+        from market_view.data.sources.upstox_source import UpstoxSource
+
+        # Authentication is verified without accessing broker orders or funds.
+        if not UpstoxSource().check():
+            raise _bad("Upstox returned no benchmark quote; paper entries remain paused.", 409)
+    try:
+        return request.app.state.paper.control(body.action == "start", body.acknowledge_research)
+    except ValueError as exc:
+        raise _bad(str(exc), 409) from None
+
+
+@api.get("/mentor/weekly")
+def get_weekly(day: str | None = None) -> dict[str, Any]:
+    from market_view.paper.review import weekly_review
+
+    return ser.deep_clean(weekly_review(DATA_DIR / "journal.duckdb", _parse_day(day) or datetime.now(IST).date()))
+
+
+class WeeklyPlanAction(BaseModel):
+    day: date
+    action_index: int | None = Field(default=None, ge=0, le=2)
+    completed: bool = False
+    note: str = Field(default="", max_length=2000)
+
+
+@api.post("/mentor/weekly/plan")
+def track_weekly_plan(body: WeeklyPlanAction) -> dict[str, bool]:
+    from market_view.paper.review import save_plan, update_action
+
+    try:
+        if body.action_index is None:
+            save_plan(DATA_DIR / "journal.duckdb", body.day)
+        else:
+            update_action(DATA_DIR / "journal.duckdb", body.day, body.action_index, body.completed, body.note)
+    except ValueError as exc:
+        raise _bad(str(exc), 409) from None
+    return {"ok": True}
+
+
+class TradeReview(BaseModel):
+    risk_ok: bool
+    plan_ok: bool
+    selection_ok: bool
+    execution_ok: bool
+    note: str = Field(min_length=10, max_length=2000)
+
+
+@api.post("/mentor/trades/{trade_id}")
+def review_trade(trade_id: int, body: TradeReview) -> dict[str, bool]:
+    from market_view.paper.review import annotate_trade
+
+    if len(body.note.strip()) < 10:
+        raise _bad("Write a specific evidence note (at least 10 characters).")
+    try:
+        annotate_trade(DATA_DIR / "journal.duckdb", trade_id, body.risk_ok, body.plan_ok,
+                       body.selection_ok, body.execution_ok, body.note.strip())
+    except ValueError as exc:
+        raise _bad(str(exc), 404) from None
+    return {"ok": True}
+
+
+@api.post("/data/check")
+def check_connection() -> dict[str, Any]:
+    from market_view.data.sources.upstox_source import UpstoxSource
+
+    return {"ok": bool(UpstoxSource().check()), "provider": "upstox", "checked_at": datetime.now(IST).isoformat(),
+            "scope": "Read-only quote authentication. This does not validate strategy profitability or opening-auction data."}
+
+
+@api.get("/market/demand")
+def get_demand() -> dict[str, Any]:
+    from market_view.api.market_demand import latest
+
+    return latest()
+
+
+@api.post("/market/demand")
+def capture_demand() -> dict[str, Any]:
+    from market_view.api.market_demand import capture
+
+    return capture()
+
+
+@api.post("/data/download", status_code=status.HTTP_202_ACCEPTED)
+def refresh_daily_history() -> dict[str, Any]:
+    from market_view.api.chart_data import Interval, download
+    from market_view.data.download import default_symbols
+
+    # Reuse the chart downloader's adjustment-safe refresh and immutable raw snapshots.
+    def run():
+        rows = []
+        for symbol in default_symbols():
+            rows.append(download(symbol, Interval.parse("1d"), _source(), None, None))
+        return rows
+
+    return jobs.submit("daily-history", {"source": _source()}, run)
 
 
 JOURNAL_TABLES = {"trades": "exit_time", "signals": "ts", "events": "ts", "equity": "ts", "orders": "ts"}
@@ -715,15 +855,26 @@ def get_data_quality(source: str | None = None) -> dict[str, Any]:
 
 
 @asynccontextmanager
-async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
-    yield
-    jobs.shutdown()
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    if app.state.run_worker:
+        app.state.paper.start_worker()
+        app.state.research.start_worker(lambda: jobs.submit("research", {"scheduled": True}, app.state.research.run_cycle))
+    try:
+        yield
+    finally:
+        app.state.paper.close()
+        app.state.research.close()
+        jobs.shutdown()
 
 
-def create_app() -> FastAPI:
+def create_app(*, run_worker: bool = False, paper: PaperAutomation | None = None,
+               research: ResearchLab | None = None) -> FastAPI:
     app = FastAPI(title="market-view", version="0.1.0", lifespan=_lifespan,
                   description="Local research + paper-trading UI API. No order endpoints exist.")
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"])
+    app.state.paper = paper or PaperAutomation()
+    app.state.research = research or ResearchLab()
+    app.state.run_worker = run_worker
     app.include_router(api)
 
     @app.exception_handler(FileNotFoundError)
@@ -747,4 +898,4 @@ def create_app() -> FastAPI:
     return app
 
 
-app = create_app()
+app = create_app(run_worker=True)

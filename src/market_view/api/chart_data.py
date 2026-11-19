@@ -146,7 +146,7 @@ def download(symbol: str, interval: Interval, source: str, start: date | None, e
         if source == "upstox":
             earliest = date(2022, 1, 1)
         start = start or end - timedelta(days=5 if native == "1m" else 30)
-        # Chart downloads are bounded; longer bulk imports belong in the CLI.
+        # Bound individual chart downloads so a UI action cannot launch an unbounded import.
         start = max(start, end - timedelta(days=365), earliest)
     else:
         start = max(start or date(2008, 1, 1), earliest)

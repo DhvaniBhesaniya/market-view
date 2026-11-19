@@ -1,4 +1,8 @@
-# 12 — Paper Trading Runbook (how to run the software)
+# 12 — Original Paper Trading Runbook (historical)
+
+> Superseded on 2026-11-19 by [the web operating guide](17-web-paper-automation.md).
+> The trading CLI has been removed; commands below document the original implementation and no
+> longer launch the application. Double-click `Start Market View.vbs` and use the web controls.
 
 Everything runs through one command, `uv run mv ...`. Prefer clicking? `uv run mv ui` opens the web UI ([15](15-web-ui.md)). Paper mode is the only mode: live orders are locked in code.
 

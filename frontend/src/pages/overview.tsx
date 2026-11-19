@@ -114,7 +114,7 @@ export default function Overview() {
           <Metric label="Mode" value="Paper" sub={s.live_trading ? "LIVE_TRADING env is set!" : "live trading off"} tone={s.live_trading ? "down" : "flat"} />
           <Metric label="Kill switch" term="kill_switch" value={s.killswitch.active ? "ON" : "off"} tone={s.killswitch.active ? "down" : "up"} sub={s.killswitch.reason ?? "new entries allowed"} />
           <Metric label="Market data" value={`${s.data[s.data_source] ?? 0} symbols`} sub={`${s.data_source} · ${lastBar ?? "–"}`} />
-          <Metric label="Paper account" value={p?.started ? rupees(p.equity) : "not started"} sub={p?.started ? `${pct(p.return_pct)} since start` : "run mv paper eod"} tone={p?.started ? tone(p.return_pct) : "flat"} />
+          <Metric label="Paper account" value={p?.started ? rupees(p.equity) : "not started"} sub={p?.started ? `${pct(p.return_pct)} since start` : "start from Paper trading"} tone={p?.started ? tone(p.return_pct) : "flat"} />
           <Metric label="Risk per trade" term="r_multiple" value={`${s.risk_per_trade_pct}%`} sub={`= ${rupees((s.paper_capital * s.risk_per_trade_pct) / 100)} on ${rupees(s.paper_capital)}`} />
           <Metric label="Daily loss cap" value={`${s.daily_loss_cap_pct}%`} sub="hit it → kill switch" />
         </MetricGrid>

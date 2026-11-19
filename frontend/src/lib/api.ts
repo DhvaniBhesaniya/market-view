@@ -249,6 +249,46 @@ export type KillSwitchState = {
   history: { at: string; action: "ON" | "OFF"; reason?: string; note?: string; source?: string }[]
 }
 
+export type AutomationStatus = {
+  entries_enabled: boolean; worker_running: boolean; research_only: boolean; heartbeat: string | null
+  busy: string | null; last_error: string | null; calendar_through_year: number; limitation: string
+  schedule: { open_job: string; eod_job: string; monitor_every_minutes: number }
+  last_job: { kind: string; finished_at: string; result: unknown } | null
+}
+export type ProcessReview = { risk_ok: boolean; plan_ok: boolean; selection_ok: boolean; execution_ok: boolean; note: string; reviewed_at?: string }
+export type DemandSnapshot = {
+  snapshot_id: string | null; captured_at?: string; session?: string; auction_verified: false; limitation: string
+  rows: { symbol: string; buy_quantity: number | null; sell_quantity: number | null; imbalance_pct: number | null; last_price: number | null; response_time: string | null; last_trade_time: string | null }[]
+}
+
+export type ResearchMetrics = {
+  trades: number; total_return_pct: number; max_drawdown_pct: number; profit_factor: number | null
+  expectancy_r: number; total_charges: number; sharpe: number
+}
+export type ResearchReport = {
+  id: string; created_at: string; fingerprint: string; status: string; protocol: string
+  input_symbols: number; promotion_allowed: false; blockers: string[]; remaining_evidence: string[]
+  checks: Record<string, boolean>; reused: boolean; llm_used: false
+  runs: { label: string; strategy: string; start: string; end: string; status: string;
+    params: Record<string, number>; metrics?: ResearchMetrics; error?: string }[]
+}
+export type ResearchOverview = {
+  status: { enabled: boolean; busy: boolean; stage: string | null; schedule: string; protocol: string
+    max_backtests: number; llm_required: false; automatic_promotion: false; last_error: string | null
+    worker_running: boolean; heartbeat: string | null }
+  market: { available: boolean; as_of: string | null; regime: string; source?: string; calendar_age_days?: number
+    close?: number; ema50?: number; ema200?: number; adx?: number; vix?: number | null; news_available: false; meaning?: string }
+  reports: ResearchReport[]
+}
+export type WeekSummary = { trades: number; net_pnl: number; win_rate_pct: number | null; biggest_win: number | null; biggest_loss: number | null; charges: number; avg_r: number | null; pnl_basis: string }
+export type WeeklyReview = {
+  week_start: string; week_end: string; summary: WeekSummary; strengths: string[]; mistakes: string[]
+  patterns: string[]; actions: string[]; progress: string; plan_saved: boolean
+  previous: { week_start: string; summary: WeekSummary; actions: { index: number; text: string; completed: boolean; note: string }[] }
+  rating: { score: number | null; components: Record<string, number>; reviewed: number; total: number; basis: string; explanation: string }
+  trades: { trade_id: number; symbol: string; strategy_id: string; entry_time: string; exit_time: string; net_pnl: number; exit_reason: string; review: ProcessReview | null }[]
+}
+
 export class ApiError extends Error {
   status: number
   details: string[]
@@ -320,6 +360,19 @@ export const api = {
   job: <R>(id: string) => request<Job<R>>(`/jobs/${enc(id)}`),
   jobs: () => request<Job[]>("/jobs"),
   paper: () => request<PaperStatus>("/paper"),
+  automation: () => request<AutomationStatus>("/paper/automation"),
+  controlPaper: (action: "start" | "pause", acknowledge_research = false) => post<AutomationStatus>("/paper/automation", { action, acknowledge_research }),
+  weeklyReview: (day: string) => request<WeeklyReview>(`/mentor/weekly${qs({ day })}`),
+  reviewTrade: (id: number, review: ProcessReview) => post<{ ok: boolean }>(`/mentor/trades/${id}`, review),
+  saveWeeklyPlan: (day: string) => post<{ ok: boolean }>("/mentor/weekly/plan", { day }),
+  trackWeeklyAction: (day: string, action_index: number, completed: boolean, note: string) => post<{ ok: boolean }>("/mentor/weekly/plan", { day, action_index, completed, note }),
+  checkConnection: () => post<{ ok: boolean; checked_at: string; scope: string }>("/data/check", {}),
+  downloadDaily: () => post<Job>("/data/download", {}),
+  demand: () => request<DemandSnapshot>("/market/demand"),
+  captureDemand: () => post<DemandSnapshot>("/market/demand", {}),
+  research: () => request<ResearchOverview>("/research"),
+  runResearch: () => post<Job<ResearchReport>>("/research/run", {}),
+  controlResearch: (enabled: boolean) => post<ResearchOverview["status"]>("/research/control", { enabled }),
   journal: (table: "trades" | "signals" | "events" | "equity" | "orders", limit = 200) =>
     request<Record<string, unknown>[]>(`/journal/${table}${qs({ limit })}`),
   killswitch: () => request<KillSwitchState>("/killswitch"),

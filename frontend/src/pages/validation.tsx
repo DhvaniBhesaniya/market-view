@@ -234,7 +234,7 @@ function Gate3Checklist({ strategy }: { strategy: string }) {
     <Card>
       <CardHeader>
         <CardTitle className="font-heading">Gate 3 checklist for {strategy}</CardTitle>
-        <CardDescription>All must pass before the locked 2023-2025 test is run (once, from the CLI). Never lower the bar to make a strategy pass.</CardDescription>
+        <CardDescription>All must pass before the locked 2023-2025 test is assessed once per frozen strategy version. Never lower the bar to make a strategy pass.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {items.map((it, i) => (

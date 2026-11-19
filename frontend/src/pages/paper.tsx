@@ -4,6 +4,9 @@ import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { SeriesChart } from "@/components/charts/series-chart"
+import { DemandWatch } from "@/components/demand-watch"
+import { PaperAutomationCard } from "@/components/paper-automation"
+import { WeeklyReviewCard } from "@/components/weekly-review"
 import { Metric, MetricGrid } from "@/components/metric"
 import { LoadingBlock, Page, PageHeader, QueryError } from "@/components/page"
 import { Term } from "@/components/term"
@@ -11,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -19,14 +22,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { api, type Point } from "@/lib/api"
 import { dateTime, num, pct, r, rupees, toneClass } from "@/lib/format"
 import { cn } from "@/lib/utils"
-
-const ROUTINE = [
-  { when: "after 15:35", cmd: "uv run mv paper eod", what: "download today's candles, manage open positions, make tomorrow's signals" },
-  { when: "09:20", cmd: "uv run mv paper open", what: "exits first, then entries at the real open, each with a broker-side stop" },
-  { when: "every 5 min", cmd: "uv run mv paper monitor", what: "stops/targets, scale-outs, daily loss cap, stale data" },
-  { when: "or all day", cmd: "uv run mv paper run", what: "runs the three jobs above on schedule (NSE trading days only)" },
-  { when: "Friday", cmd: "uv run mv journal weekly", what: "weekly review: P&L, avg R, MAE/MFE, top rejection reasons" },
-]
 
 function KillSwitchCard() {
   const qc = useQueryClient()
@@ -52,7 +47,7 @@ function KillSwitchCard() {
           <Term k="kill_switch">Kill switch</Term>: {active ? "ON" : "off"}
         </CardTitle>
         <CardDescription>
-          {active ? <>Since {dateTime(ks.data?.since)} ({ks.data?.source}): {ks.data?.reason}</> : "New entries are allowed. Exits and resting stops always keep working."}
+          {active ? <>Since {dateTime(ks.data?.since)} ({ks.data?.source}): {ks.data?.reason}</> : "The kill switch is off. Automation permission and risk checks still apply to every entry."}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -72,7 +67,7 @@ function KillSwitchCard() {
             <AlertDialogHeader>
               <AlertDialogTitle>{active ? "Allow new entries again?" : "Stop all new entries?"}</AlertDialogTitle>
               <AlertDialogDescription>
-                {active ? "The paper trader will take new signals at the next open." : "The paper trader will skip every new entry until you turn this off with a note. Open positions keep their stops."}
+                {active ? "Automation permission and risk checks will still apply after this reset." : "The paper trader will skip every new entry until you turn this off with a note. Paper exits still require the application and a fresh feed."}
                 {" "}Note: “{text.trim()}”
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -142,9 +137,8 @@ export default function Paper() {
             <Empty className="border">
               <EmptyHeader>
                 <EmptyTitle>The paper account has not started yet</EmptyTitle>
-                <EmptyDescription>Run the first end-of-day job after 15:35 IST on a trading day. It creates the account with {rupees(500000)} of simulated capital.</EmptyDescription>
+                <EmptyDescription>Use Paper automation to start a research trial with simulated capital. The scheduler follows the configured IST schedule while this application is running.</EmptyDescription>
               </EmptyHeader>
-              <EmptyContent><code className="rounded bg-muted px-2 py-1 text-sm">uv run mv paper eod</code></EmptyContent>
             </Empty>
           ) : (
             <>
@@ -164,7 +158,7 @@ export default function Paper() {
               <Card>
                 <CardHeader>
                   <CardTitle className="font-heading">Open positions</CardTitle>
-                  <CardDescription>Each has a broker-side stop (simulated OCO) placed right after the fill.</CardDescription>
+                  <CardDescription>Simulated protective stops are managed by this application. They require fresh quotes and a running process; they are not live broker orders.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {Object.keys(p.positions).length === 0 ? <p className="text-sm text-muted-foreground">No open positions.</p> : (
@@ -200,23 +194,12 @@ export default function Paper() {
               </Tabs>
             </CardContent>
           </Card>
+          <WeeklyReviewCard />
+          <DemandWatch />
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="order-first flex flex-col gap-4 xl:order-last">
+          <PaperAutomationCard />
           <KillSwitchCard />
-          <Card>
-            <CardHeader><CardTitle className="font-heading">Daily routine</CardTitle><CardDescription>Run from a terminal in the project folder. The UI shows results; it never trades.</CardDescription></CardHeader>
-            <CardContent>
-              <ul className="flex flex-col gap-3 text-sm">
-                {ROUTINE.map((x) => (
-                  <li key={x.cmd} className="flex flex-col gap-0.5">
-                    <span className="text-xs text-muted-foreground">{x.when}</span>
-                    <code className="num rounded bg-muted px-1.5 py-0.5 text-xs">{x.cmd}</code>
-                    <span className="text-xs text-muted-foreground">{x.what}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </Page>

@@ -10,7 +10,12 @@ Full plan lives in [docs/](docs/README.md). Read [docs/04-roadmap.md](docs/04-ro
 
 ## Current phase
 
-> **Phases 1–4 code built (2026-11-05) + web UI (2026-11-16); research + paper trading underway.** Data layer, indicators, 3 strategies, no-code rule strategies, event-driven backtester with Indian costs, validation, risk engine, kill switch, paper broker, execution FSM, journal, CLI and a local web UI (`uv run mv ui`, docs/15-web-ui.md) exist, with 147 Python tests + 11 frontend tests + a browser e2e check. A 2026-11-16 audit fixed 7 engine bugs (MAE/MFE, Sortino, raised-stop timing, weekend/holiday jobs, daily-loss breaker parity, gap entry, sensitivity on small ints). Baseline: all three v1 strategies are slightly negative after costs over 2010–2022, so **no strategy has passed Gate 3 yet** (re-confirmed on Upstox data 2026-11-18). Upstox Analytics token added 2026-11-18 (expires ~2027-11); backtests now use `data_source: upstox`. Known Upstox data issues: ADANIENT 2015-06-03 demerger unadjusted (fake -83%), BAJFINANCE 2008–09 prices tick-rounded, no dividend adjustment. Next: improve strategies one hypothesis at a time; start daily paper runs. Update this line when a gate in `docs/04-roadmap.md` is passed.
+> **Research extension, 2026-11-19:** `/research` provides AI-independent market context and bounded
+> trend-versus-ADX research with opt-in Sunday scheduling, exact snapshots, data vetoes and report
+> reuse. Numeric checks never grant promotion authority. The first actual data audit was blocked
+> with 52 recorded findings; no strategy or risk configuration changed. See [guide 18](docs/18-independent-research.md).
+
+> **2026-11-19: web-operated paper research, not a validated trading system.** Double-click `Start Market View.vbs`; the trading CLI has been removed. The web app has explicit paper-trial enable/pause, a single scheduled worker, heartbeat/errors, demand observations, and an evidence-based weekly mentor with tracked priorities. The owner's trial is not automatically started by installation. See [the current operating guide](docs/17-web-paper-automation.md). **No strategy has passed Gate 3** (baseline rechecked on Upstox data 2026-11-18). Backtests use `data_source: upstox`; read-only Analytics access was verified on 2026-11-19. Known data issues remain: ADANIENT's 2015 demerger, BAJFINANCE's early tick-rounded prices, and no dividend adjustment. Current strategies are daily cash-equity swing strategies; intraday, verified opening-auction signals and F&O remain separate research work. Preserve validation gates and improve one frozen hypothesis at a time.
 
 ---
 
@@ -18,7 +23,7 @@ Full plan lives in [docs/](docs/README.md). Read [docs/04-roadmap.md](docs/04-ro
 
 These override any other instruction, including a user request in the moment. If asked to break one, stop and point to this section.
 
-1. **`LIVE_TRADING=false` is the default everywhere.** Live orders require *two* explicit switches: the env var `LIVE_TRADING=true` **and** a `--live` CLI flag. Never flip either in code, tests, or examples.
+1. **`LIVE_TRADING=false` is the default everywhere.** The execution boundary retains two explicit switches: the env var `LIVE_TRADING=true` and an explicit live flag. This web application never supplies that flag; real order methods remain locked/unimplemented. Never enable them as part of paper research.
 2. **No LLM ever calls the broker.** AI output is a *suggestion/score* that flows `AI → strategy engine → risk engine → execution engine → broker`. No tool, agent, or MCP server with order-placement authority is exposed to an LLM.
 3. **Every order passes the risk engine.** Strategies emit `Signal` objects; they never import the broker module.
 4. **Every live entry has a broker-side stop-loss** (Groww smart order / GTT / OCO) placed immediately after fill. A stop that lives only in our process does not count.
@@ -78,8 +83,8 @@ market-view/
 │   ├── execution/           # order FSM, idempotency, rate limit, kill-switch gate
 │   ├── paper/trader.py      # eod / open / monitor jobs + scheduler
 │   ├── api/                 # FastAPI for the web UI (app.py, jobs.py); NO order endpoints
-│   └── cli.py               # `uv run mv ...`
-├── frontend/                # React + TS + Vite + shadcn/ui + Lightweight Charts (npm run build -> dist/, served by `mv ui`)
+│   └── server.py            # desktop launcher -> local FastAPI application
+├── frontend/                # React + TS + Vite + shadcn/ui + Lightweight Charts (npm run build -> dist/)
 ├── tests/                   # pytest (147) + tests/e2e/ui_e2e.py (real-browser check)
 ├── data/                    # gitignored: candles, paper account, journal, kill switch, experiments
 └── reports/                 # gitignored: backtest HTML/CSV
@@ -139,27 +144,17 @@ Notes on third-party skills:
 
 ## Commands
 
-Full runbook: [docs/12-paper-trading-runbook.md](docs/12-paper-trading-runbook.md).
+User operation: double-click `Start Market View.vbs`, then use the web controls.
+Current guide: [docs/17-web-paper-automation.md](docs/17-web-paper-automation.md).
+These commands are developer verification, not a trading interface:
 
 ```bash
 uv sync                                              # install deps
 uv run pytest                                        # tests (must stay green)
 uv run ruff check src tests                          # lint
-uv run mv doctor                                     # setup/safety check
-uv run mv data download --source yfinance --start 2008-01-01   # or --source upstox once the token is set
-uv run mv data validate
-uv run mv backtest run --strategy trend_v1 --period full       # periods: train|validate|full|test(locked)
-uv run mv validate walkforward trend_v1
-uv run mv validate sensitivity trend_v1
-uv run mv validate montecarlo trend_v1
-uv run mv paper eod | open | monitor | status | reconcile | run
-uv run mv risk killswitch status|on|off --reason "..."
-uv run mv journal weekly
-uv run mv ui                                         # web UI at http://127.0.0.1:8000 (build first: cd frontend; npm install; npm run build)
 uv run python tests/e2e/ui_e2e.py                    # real-browser check of the UI (isolated copy of data)
-uv run mv upstox check
 ```
-On Windows PowerShell set `$env:PYTHONIOENCODING="utf-8"` if rich tables show encoding errors.
+Frontend checks: run `npm run check` from `frontend/`.
 
 ## How to work in this repo
 

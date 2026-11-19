@@ -98,3 +98,79 @@ def test_scale_out_moves_stop_to_breakeven(tmp_path):
     assert pos["scaled_out"] and pos["stop"] >= entry
     assert pos["qty"] < pos["initial_qty"]
     assert t.reconcile() == []
+
+
+def test_stale_entry_quote_never_fills(tmp_path):
+    t = trader(tmp_path)
+    now = datetime(2026, 11, 5, 9, 20, tzinfo=IST)
+    queue_signal(t)
+    result = t.open_job(now, {"TCS": q("TCS", 1000, now - timedelta(hours=1))})
+    assert not result["entries"]
+    assert t.killswitch.active
+
+
+def test_expired_signal_cannot_be_entered_days_later(tmp_path):
+    t = trader(tmp_path)
+    queue_signal(t)
+    now = datetime(2026, 11, 6, 9, 20, tzinfo=IST)
+    result = t.open_job(now, {"TCS": q("TCS", 1000, now)})
+    assert not result["entries"]
+
+
+def test_stale_monitor_price_does_not_simulate_an_exit(tmp_path):
+    t = trader(tmp_path)
+    now = datetime(2026, 11, 5, 9, 20, tzinfo=IST)
+    queue_signal(t)
+    t.open_job(now, {"TCS": q("TCS", 1000, now)})
+    later = now + timedelta(hours=1)
+    result = t.monitor(later, {"TCS": q("TCS", 960, now)})
+    assert not result["fills"]
+    assert "TCS" in t.positions and t.killswitch.active
+
+
+def test_missing_position_quote_halts_entries(tmp_path):
+    t = trader(tmp_path)
+    now = datetime(2026, 11, 5, 9, 20, tzinfo=IST)
+    queue_signal(t)
+    t.open_job(now, {"TCS": q("TCS", 1000, now)})
+    t.monitor(now + timedelta(minutes=5), {})
+    assert t.killswitch.active
+
+
+def test_open_job_is_idempotent_and_reconciles_before_entries(tmp_path):
+    t = trader(tmp_path)
+    now = datetime(2026, 11, 5, 9, 20, tzinfo=IST)
+    queue_signal(t)
+    t.open_job(now, {"TCS": q("TCS", 1000, now)})
+    queue_signal(t, sym="INFY")
+    assert not t.open_job(now, {"INFY": q("INFY", 1000, now)})["entries"]
+    # Recovering an account with a missing stop must block a different fresh entry.
+    t.st["last_open"] = None
+    t.broker.s["protective"] = {}
+    assert not t.open_job(now, {"INFY": q("INFY", 1000, now)})["entries"]
+    assert t.killswitch.active
+
+
+def test_protection_failure_flattens_entry_and_halts_new_risk(tmp_path, monkeypatch):
+    t = trader(tmp_path)
+    now = datetime(2026, 11, 5, 9, 20, tzinfo=IST)
+    queue_signal(t)
+
+    def fail(*a, **k):
+        raise RuntimeError("protective placement failed")
+
+    monkeypatch.setattr(t.broker, "place_protective", fail)
+    t.open_job(now, {"TCS": q("TCS", 1000, now)})
+    assert not t.positions and not t.broker.positions()
+    assert t.killswitch.active
+    assert len(t.journal.query("SELECT * FROM trades")) == 1
+
+
+def test_opening_gap_counts_toward_daily_loss_limit(tmp_path):
+    t = trader(tmp_path)
+    now = datetime(2026, 11, 5, 9, 20, tzinfo=IST)
+    queue_signal(t)
+    t.open_job(now, {"TCS": q("TCS", 1000, now)})
+    t.st["day"]["date"] = "2026-11-04"
+    t._roll_period(now.date(), {"TCS": q("TCS", 700, now)})
+    assert t._state({"TCS": q("TCS", 700, now)}).day_pnl_pct < -1

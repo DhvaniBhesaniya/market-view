@@ -6,7 +6,7 @@
 *.key
 
 # --- Market data & local databases ---
-data/
+/data/
 *.duckdb
 *.duckdb.wal
 *.parquet
