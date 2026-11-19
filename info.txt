@@ -1,7 +1,23 @@
 need an auto bot stratagey testing and mkeing it ore proficient , and removal of cli  tool , we nned proper backend and ui for me to do everything  and a perfect backent for eveything to handle .
 
 
+The commands
+Run these from the project folder:
 
+
+uv run market-view start     # runs in this terminal, with logs visible
+uv run market-view status    # is it running? which process?
+uv run market-view stop      # stops it, including one started by the .vbs
+With start, the app lives inside that terminal: Ctrl+C or closing the terminal stops it. Nothing runs hidden.
+
+To stop it right now
+
+uv run market-view stop
+It's currently running as process 34640, started at 1:30 PM. I haven't stopped it myself, because of this trade-off:
+
+Stopping the app pauses your paper trial. Today's 15:45 analysis won't run, and tomorrow's 09:20 entries won't happen unless the app is running by then. Your account and settings stay saved; nothing is lost. When you start again, the trial carries on, and it skips any jobs it missed rather than catching up late.
+
+So a sensible routine is: start before 09:15 on trading days, leave the terminal open, and stop after 15:45 if you want.
 
 
 
